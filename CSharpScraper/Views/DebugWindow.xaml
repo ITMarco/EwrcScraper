@@ -1,0 +1,30 @@
+<Window x:Class="EwrcScraper.Views.DebugWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Debug log — EWRC Scraper" Height="400" Width="700"
+        Background="{StaticResource LightBgBrush}"
+        WindowStyle="ToolWindow" ShowInTaskbar="False">
+    <DockPanel Margin="8">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="🗑 Wissen" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                    Command="{Binding WissenCommand}" Margin="0,0,8,0"/>
+            <Button Content="📋 Kopieer alles" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                    Command="{Binding KopieerNaarKlembordCommand}"/>
+        </StackPanel>
+        <ListBox ItemsSource="{Binding LogRegels}" x:Name="LogList"
+                 FontFamily="Consolas" FontSize="11"
+                 Background="#0D1117" Foreground="#C9D1D9"
+                 BorderBrush="#30363D" BorderThickness="1"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 VirtualizingPanel.IsVirtualizing="True">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Padding" Value="4,1"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Style>
+            </ListBox.ItemContainerStyle>
+        </ListBox>
+    </DockPanel>
+</Window>

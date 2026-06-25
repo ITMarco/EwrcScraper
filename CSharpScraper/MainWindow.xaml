@@ -1,0 +1,364 @@
+<Window x:Class="EwrcScraper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="EWRC Scraper — RCH" Height="720" Width="1050"
+        MinHeight="600" MinWidth="850"
+        Background="{StaticResource LightBgBrush}">
+
+    <Window.Resources>
+        <Style x:Key="TabHeaderStyle" TargetType="TabItem">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Foreground" Value="#556"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Name="Border" Padding="{TemplateBinding Padding}"
+                                BorderThickness="0,0,0,3" BorderBrush="Transparent">
+                            <ContentPresenter ContentSource="Header"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush"
+                                        Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Titelbalk -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource PrimaryBrush}" Padding="16,10">
+            <DockPanel>
+                <TextBlock Text="EWRC Scraper" FontSize="18" FontWeight="Bold"
+                           Foreground="White" VerticalAlignment="Center"/>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="BtnDebug" Content="🛠 Debug" Style="{StaticResource SecondaryButton}"
+                            Background="Transparent" Foreground="White" BorderBrush="#5580A0"
+                            Margin="0,0,8,0" Click="BtnDebug_Click"/>
+                </StackPanel>
+                <TextBlock Text="Rally Club Holland — inschrijvingen vergelijker"
+                           FontSize="11" Foreground="#8AAAC8" VerticalAlignment="Center"
+                           Margin="12,0,0,0"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Statusbalk onderin -->
+        <Border DockPanel.Dock="Bottom" Background="White"
+                BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,1,0,0"
+                Padding="12,6">
+            <DockPanel>
+                <Button x:Name="BtnLedenlijst" Content="📂 Ledenlijst laden"
+                        Style="{StaticResource SecondaryButton}" Padding="10,5"
+                        DockPanel.Dock="Right" Margin="8,0,0,0"
+                        Command="{Binding Ledenlijst.BrowseLedenlijstCommand}"/>
+                <TextBlock Text="{Binding StatusBalk}" Style="{StaticResource StatusLabel}"
+                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Tabs -->
+        <TabControl Background="Transparent" BorderThickness="0" Padding="0">
+            <!-- TAB 1: Rally selectie -->
+            <TabItem Style="{StaticResource TabHeaderStyle}" Header="Stap 1 · Rally selecteren">
+                <Grid Margin="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="260"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Links: landen + jaar -->
+                    <DockPanel Grid.Column="0">
+                        <Label Content="Landen" Style="{StaticResource HeaderLabel}" DockPanel.Dock="Top"/>
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Vertical" Margin="0,8,0,0">
+                            <Label Content="Jaar" Style="{StaticResource HeaderLabel}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="◀" Width="30" Margin="0,0,4,0"
+                                        Style="{StaticResource SecondaryButton}" Padding="4,5"
+                                        Click="JaarTerug_Click"/>
+                                <TextBlock Text="{Binding RallySelectie.GeselecteerdJaar}"
+                                           FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
+                                           Foreground="{StaticResource PrimaryBrush}" Width="50"
+                                           TextAlignment="Center"/>
+                                <Button Content="▶" Width="30" Margin="4,0,0,0"
+                                        Style="{StaticResource SecondaryButton}" Padding="4,5"
+                                        Click="JaarVooruit_Click"/>
+                            </StackPanel>
+                            <Button Content="🔄 Rally lijst ophalen" Margin="0,8,0,0"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding RallySelectie.UpdateRallyLijstCommand}"/>
+                            <TextBlock Text="{Binding RallySelectie.StatusTekst}"
+                                       Style="{StaticResource StatusLabel}" Margin="0,6,0,0"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <ListBox ItemsSource="{Binding RallySelectie.Landen}"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                              Content="{Binding DisplayName}" Margin="2"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+
+                    <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource AppBorderBrush}"/>
+
+                    <!-- Rechts: rally lijst -->
+                    <DockPanel Grid.Column="2">
+                        <Label Content="Rally's" Style="{StaticResource HeaderLabel}" DockPanel.Dock="Top"/>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Width="200" Margin="0,0,8,0" Padding="6,4"
+                                     Text="{Binding RallySelectie.Filter, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderBrush="{StaticResource AppBorderBrush}">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Style.Resources>
+                                            <VisualBrush x:Key="HintBrush" TileMode="None" Stretch="None" AlignmentX="Left">
+                                                <VisualBrush.Visual>
+                                                    <TextBlock Text="Filter..." Foreground="#AAA" Margin="6,4"/>
+                                                </VisualBrush.Visual>
+                                            </VisualBrush>
+                                        </Style.Resources>
+                                        <Style.Triggers>
+                                            <Trigger Property="Text" Value="">
+                                                <Setter Property="Background" Value="{StaticResource HintBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <Button Content="Alle aan" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                                    Margin="0,0,4,0" Command="{Binding RallySelectie.SelecteerAlleCommand}"/>
+                            <Button Content="Alle uit" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                                    Command="{Binding RallySelectie.DeselecteerAlleCommand}"/>
+                        </StackPanel>
+
+                        <DataGrid ItemsSource="{Binding RallySelectie.GefilterdeEvents}"
+                                  BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                            <DataGrid.Columns>
+                                <DataGridCheckBoxColumn Header="" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="36"/>
+                                <DataGridTextColumn Header="🏁 Rally" Binding="{Binding DisplayName}" Width="*"/>
+                                <DataGridTextColumn Header="Van" Binding="{Binding From}" Width="90"/>
+                                <DataGridTextColumn Header="T/m" Binding="{Binding Until}" Width="90"/>
+                                <DataGridTextColumn Header="Land" Binding="{Binding Country}" Width="60"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 2: Ledenlijst -->
+            <TabItem Style="{StaticResource TabHeaderStyle}" Header="Stap 2 · Ledenlijst">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                        <Button Content="📂 Ledenlijst laden" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding Ledenlijst.BrowseLedenlijstCommand}" Margin="0,0,12,0"/>
+                        <TextBlock VerticalAlignment="Center">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0}  —  {1} leden geladen">
+                                    <Binding Path="Ledenlijst.LedenlijstPad"/>
+                                    <Binding Path="Ledenlijst.AantalLeden"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <Border Grid.Row="1" Background="White" BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="1" CornerRadius="4" Padding="16">
+                        <TextBlock TextWrapping="Wrap" Foreground="#556" FontSize="13">
+                            <Run FontWeight="SemiBold">Ondersteunde formaten:</Run>
+                            <LineBreak/>
+                            • CSV (komma of puntkomma gescheiden)<LineBreak/>
+                            • Excel (.xlsx)<LineBreak/>
+                            <LineBreak/>
+                            <Run FontWeight="SemiBold">Vereiste kolommen:</Run>
+                            <LineBreak/>
+                            EwrcNrPilot, EwrcNrCoPilot, Leden Nr., E-mail adres<LineBreak/>
+                            Overige kolommen worden automatisch herkend.
+                        </TextBlock>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 3: Vergelijken -->
+            <TabItem Style="{StaticResource TabHeaderStyle}" Header="Stap 3 · Vergelijken">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Knoppen bovenaan -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="⬇ Rally info ophalen" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding HaalRallyInfoOpCommand}" Margin="0,0,8,0"
+                                IsEnabled="{Binding Vergelijking.IsBezig, Converter={StaticResource InvBoolToVis}}"/>
+                        <Button Content="🔍 Vergelijk met ledenlijst" Style="{StaticResource AccentButton}"
+                                Command="{Binding VergelijkCommand}" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding Vergelijking.StatusTekst}"
+                                   Style="{StaticResource StatusLabel}" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Voortgangsbalk -->
+                    <StackPanel Grid.Row="1" Margin="0,0,0,8"
+                                Visibility="{Binding Vergelijking.IsBezig, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding Vergelijking.VoortgangTekst}"
+                                   Style="{StaticResource StatusLabel}" Margin="0,0,0,3"/>
+                        <ProgressBar Value="{Binding Vergelijking.Voortgang}"
+                                     Maximum="{Binding Vergelijking.VoortgangMax}"
+                                     Height="6" Foreground="{StaticResource AccentBrush}"/>
+                    </StackPanel>
+
+                    <!-- Filter + tabel -->
+                    <DockPanel Grid.Row="2">
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Width="200" Margin="0,0,8,0" Padding="6,4"
+                                     Text="{Binding Vergelijking.Filter, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderBrush="{StaticResource AppBorderBrush}"/>
+                            <TextBlock Text="Filter op naam, rally of e-mail"
+                                       Style="{StaticResource StatusLabel}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <DataGrid ItemsSource="{Binding Vergelijking.GefilterdeMatches}"
+                                  BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Leden Nr." Binding="{Binding LedenNr}" Width="80"/>
+                                <DataGridTextColumn Header="Naam" Binding="{Binding VolledigeNaam}" Width="160"/>
+                                <DataGridTextColumn Header="E-mail" Binding="{Binding EmailAdres}" Width="200"/>
+                                <DataGridTextColumn Header="EWRC Nr." Binding="{Binding EwrcNr}" Width="80"/>
+                                <DataGridTextColumn Header="Rol" Binding="{Binding Rol}" Width="80"/>
+                                <DataGridTextColumn Header="Rally" Binding="{Binding Rally}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+
+                    <!-- Export knoppen -->
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="📋 Kopieer e-mailadressen" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding Vergelijking.KopieerEmailsCommand}" Margin="0,0,8,0"/>
+                        <Button Content="💾 Exporteer naar CSV" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding Vergelijking.ExporteerCsvCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 4: Rijder zoeken -->
+            <TabItem Style="{StaticResource TabHeaderStyle}" Header="EWRC Zoeken">
+                <Grid Margin="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Links: zoekresultaten -->
+                    <DockPanel Grid.Column="0">
+                        <Label Content="Zoeken" Style="{StaticResource HeaderLabel}" DockPanel.Dock="Top"/>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBox Width="190" Padding="6,4" Margin="0,0,6,0"
+                                     Text="{Binding RijderZoeken.Zoekterm, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderBrush="{StaticResource AppBorderBrush}">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Return" Command="{Binding RijderZoeken.ZoekCommand}"/>
+                                </TextBox.InputBindings>
+                            </TextBox>
+                            <Button Content="🔍" Style="{StaticResource PrimaryButton}" Padding="10,5"
+                                    Command="{Binding RijderZoeken.ZoekCommand}"/>
+                        </StackPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="{Binding RijderZoeken.StatusTekst}"
+                                   Style="{StaticResource StatusLabel}" Margin="0,0,0,6"/>
+                        <ListBox ItemsSource="{Binding RijderZoeken.Zoekresultaten}"
+                                 SelectedItem="{Binding RijderZoeken.GeselecteerdeRijder}"
+                                 BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="4,2">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock FontSize="10" Foreground="#778">
+                                            <Run Text="{Binding Type}"/>
+                                            <Run Text=" · "/>
+                                            <Run Text="{Binding Country}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+
+                    <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource AppBorderBrush}"/>
+
+                    <!-- Rechts: rijderprofiel -->
+                    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="8,0,0,0">
+                            <Label Content="Rijdersprofiel" Style="{StaticResource HeaderLabel}"/>
+
+                            <!-- Foto + basisinfo -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <Image Source="{Binding RijderZoeken.RijderFoto}" Width="100" Height="130"
+                                       Stretch="UniformToFill" Margin="0,0,12,0">
+                                    <Image.Clip>
+                                        <RectangleGeometry RadiusX="6" RadiusY="6"
+                                                           Rect="0,0,100,130"/>
+                                    </Image.Clip>
+                                </Image>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding RijderZoeken.RijderNaam}"
+                                               FontSize="18" FontWeight="Bold"
+                                               Foreground="{StaticResource PrimaryBrush}"/>
+                                    <TextBlock Text="{Binding RijderZoeken.RijderType}"
+                                               FontSize="12" Foreground="#556" Margin="0,2,0,0"/>
+                                    <TextBlock Margin="0,6,0,0" FontSize="12">
+                                        <Run Foreground="#778">Land: </Run>
+                                        <Run Text="{Binding RijderZoeken.RijderLand}" FontWeight="SemiBold"/>
+                                    </TextBlock>
+                                    <TextBlock FontSize="12">
+                                        <Run Foreground="#778">Geboren: </Run>
+                                        <Run Text="{Binding RijderZoeken.RijderGeboren}" FontWeight="SemiBold"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Stats tabel -->
+                            <Label Content="Statistieken per categorie" Style="{StaticResource HeaderLabel}"/>
+                            <DataGrid ItemsSource="{Binding RijderZoeken.RijderStats}"
+                                      BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
+                                      MaxHeight="300">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Categorie" Binding="{Binding Category}" Width="*"/>
+                                    <DataGridTextColumn Header="Starts" Binding="{Binding Starts}" Width="60"/>
+                                    <DataGridTextColumn Header="Winst" Binding="{Binding Wins}" Width="60"/>
+                                    <DataGridTextColumn Header="Podiums" Binding="{Binding Podiums}" Width="70"/>
+                                    <DataGridTextColumn Header="Finish" Binding="{Binding Finishes}" Width="60"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

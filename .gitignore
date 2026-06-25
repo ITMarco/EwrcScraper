@@ -21,6 +21,7 @@ CSharpScraper/obj/
 
 # Publish output
 CSharpScraper/publish/
+publish/
 
 # OS
 Thumbs.db
