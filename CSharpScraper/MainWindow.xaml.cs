@@ -81,6 +81,15 @@ public partial class MainWindow : Window
     private void JaarVooruit_Click(object sender, RoutedEventArgs e)
         => _vm.RallySelectie.GeselecteerdJaar++;
 
+    private void Tabs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (e.AddedItems.Count == 0) return;
+        if (e.AddedItems[0] is not System.Windows.Controls.TabItem tab) return;
+        if (tab.Header?.ToString()?.StartsWith("Stap 3") != true) return;
+        if (_vm.Vergelijking.AlleInschrijvingen.Count > 0 && _vm.Ledenlijst.Leden.Count > 0)
+            _vm.VergelijkCommand.Execute(null);
+    }
+
     private void LedenlijstGrid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
         var hit = e.OriginalSource as DependencyObject;

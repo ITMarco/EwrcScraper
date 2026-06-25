@@ -68,7 +68,8 @@
         </Border>
 
         <!-- Tabs -->
-        <TabControl Background="Transparent" BorderThickness="0" Padding="0">
+        <TabControl Background="Transparent" BorderThickness="0" Padding="0"
+                    SelectionChanged="Tabs_SelectionChanged">
             <!-- TAB 1: Rally selectie -->
             <TabItem Style="{StaticResource TabHeaderStyle}" Header="Stap 1 · Rally selecteren">
                 <Grid Margin="12">

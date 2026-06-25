@@ -2,13 +2,14 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Nieuwe versie beschikbaar"
-        Height="340" Width="520"
+        Height="380" Width="520"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         Background="{StaticResource LightBgBrush}">
     <DockPanel>
 
+        <!-- Header -->
         <Border DockPanel.Dock="Top" Background="{StaticResource PrimaryBrush}" Padding="20,14">
             <StackPanel>
                 <TextBlock x:Name="TitelTekst" FontSize="16" FontWeight="Bold" Foreground="White"/>
@@ -16,6 +17,7 @@
             </StackPanel>
         </Border>
 
+        <!-- Footer buttons -->
         <Border DockPanel.Dock="Bottom" Background="White"
                 BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,1,0,0"
                 Padding="16,12">
@@ -23,12 +25,28 @@
                 <Button x:Name="LaterBtn" Content="Later"
                         Style="{StaticResource SecondaryButton}"
                         Padding="12,7" Margin="0,0,8,0" Click="Later_Click"/>
-                <Button x:Name="DownloadBtn" Content="📥 Naar downloadpagina"
+                <Button x:Name="DownloadBtn" Content="📥 Zelf downloaden"
+                        Style="{StaticResource SecondaryButton}"
+                        Padding="12,7" Margin="0,0,8,0" Click="Download_Click"/>
+                <Button x:Name="AutoUpdateBtn" Content="⬆ Auto-update"
                         Style="{StaticResource PrimaryButton}"
-                        Padding="12,7" Click="Download_Click"/>
+                        Padding="12,7" Click="AutoUpdate_Click"/>
             </StackPanel>
         </Border>
 
+        <!-- Download progress (hidden until in use) -->
+        <Border DockPanel.Dock="Bottom" x:Name="VoortgangPanel" Visibility="Collapsed"
+                Background="White"
+                BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,1,0,0"
+                Padding="16,10">
+            <StackPanel>
+                <TextBlock x:Name="VoortgangTekst" FontSize="11" Foreground="#556" Margin="0,0,0,6"/>
+                <ProgressBar x:Name="Voortgang" Height="6" Minimum="0" Maximum="100"
+                             Foreground="{StaticResource AccentBrush}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Release notes -->
         <Border Margin="16" Background="White"
                 BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
                 CornerRadius="4">

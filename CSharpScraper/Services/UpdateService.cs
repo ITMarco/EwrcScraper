@@ -21,9 +21,9 @@ public class UpdateService
         return v == null ? "0.0.0" : $"{v.Major}.{v.Minor}.{v.Build}";
     }
 
-    // Returns (update, true) when a newer version is found.
-    // Returns (null, true) when the check succeeded but no update is available.
-    // Returns (null, false) when the check itself failed (network error, API error, etc.)
+    // (update, true)  — newer version found
+    // (null,   true)  — check succeeded, already up to date
+    // (null,   false) — check failed (network, API error, etc.)
     public async Task<(UpdateInfo? Update, bool Geslaagd)> CheckForUpdateAsync()
     {
         try
@@ -44,11 +44,22 @@ public class UpdateService
                 Version.TryParse(HuidigeVersie(), out var vHuidige) &&
                 vNieuw > vHuidige)
             {
+                // Find the framework-dependent zip in the release assets
+                // (name ends with -win-x64.zip but NOT -standalone)
+                var assets = release["assets"] as JArray;
+                var zipAsset = assets?.FirstOrDefault(a =>
+                {
+                    var name = a["name"]?.Value<string>() ?? string.Empty;
+                    return name.EndsWith("-win-x64.zip", StringComparison.OrdinalIgnoreCase)
+                        && !name.Contains("-standalone", StringComparison.OrdinalIgnoreCase);
+                });
+
                 return (new UpdateInfo
                 {
                     VersieNummer = nieuwVersie,
                     ReleaseNotes = release["body"]?.Value<string>() ?? string.Empty,
                     DownloadUrl = release["html_url"]?.Value<string>() ?? string.Empty,
+                    ZipDownloadUrl = zipAsset?["browser_download_url"]?.Value<string>() ?? string.Empty,
                     PublicatieDatum = release["published_at"]?.Value<string>() ?? string.Empty,
                 }, true);
             }
