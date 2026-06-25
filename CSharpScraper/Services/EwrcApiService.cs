@@ -259,22 +259,24 @@ public class EwrcApiService
 
         try
         {
-            var profileTask = _http.GetStringAsync(profileUrl);
-            var statsTask = _http.GetStringAsync(statsUrl);
-            await Task.WhenAll(profileTask, statsTask);
+            // Fetch both independently: the profile endpoint can 404 while the
+            // categories endpoint still works (and vice versa). Don't let one
+            // failure wipe out the other.
+            var profileJson = await TryGetJObjectAsync(profileUrl);
+            var statsToken = await TryGetJTokenAsync(statsUrl);
 
-            var profileJson = JObject.Parse(await profileTask);
-            var statsToken = JToken.Parse(await statsTask);
+            if (profileJson == null && statsToken == null)
+                throw new Exception("Zowel profiel- als statistiek-endpoint gaven geen gegevens (404).");
 
             // API returns firstname+lastname, not a combined "name"
-            var firstName = profileJson["firstname"]?.Value<string>() ?? string.Empty;
-            var lastName  = profileJson["lastname"]?.Value<string>() ?? string.Empty;
+            var firstName = profileJson?["firstname"]?.Value<string>() ?? string.Empty;
+            var lastName  = profileJson?["lastname"]?.Value<string>() ?? string.Empty;
             var fullName  = $"{firstName} {lastName}".Trim();
             if (string.IsNullOrEmpty(fullName))
-                fullName = profileJson["name"]?.Value<string>() ?? string.Empty;
+                fullName = profileJson?["name"]?.Value<string>() ?? string.Empty;
 
             // Country is under nation.name (multilingual) with a flag code in nation.flag
-            var nation = profileJson["nation"] as JObject;
+            var nation = profileJson?["nation"] as JObject;
             var countryName = string.Empty;
             if (nation?["name"] is JObject nameObj)
                 countryName = nameObj["nl"]?.Value<string>()
@@ -283,11 +285,12 @@ public class EwrcApiService
             if (string.IsNullOrEmpty(countryName))
                 countryName = (nation?["flag"]?.Value<string>() ?? string.Empty).ToUpperInvariant();
 
-            var slug = profileJson["slug"]?.Value<string>() ?? string.Empty;
-            var rawPhoto = profileJson["photo"]?.Value<string>() ?? string.Empty;
+            var slug = profileJson?["slug"]?.Value<string>() ?? string.Empty;
+            var rawPhoto = profileJson?["photo"]?.Value<string>() ?? string.Empty;
+            // Photos are served from the media host, not www.
             var photoUrl = string.IsNullOrEmpty(rawPhoto)
                 ? string.Empty
-                : $"https://www.ewrc-results.com/photos/{rawPhoto}";
+                : $"https://media.ewrc-results.com/photos/{rawPhoto}";
             var pageSegment = endpoint == "codriver" ? "coprofile" : "profile";
             var profilePageUrl = string.IsNullOrEmpty(slug)
                 ? string.Empty
@@ -297,9 +300,9 @@ public class EwrcApiService
             {
                 Id = driverId,
                 Name = fullName,
-                Type = profileJson["type"]?.Value<string>() ?? string.Empty,
+                Type = profileJson?["type"]?.Value<string>() ?? string.Empty,
                 Country = countryName,
-                Born = profileJson["born"]?.Value<string>() ?? string.Empty,
+                Born = profileJson?["born"]?.Value<string>() ?? string.Empty,
                 PhotoUrl = photoUrl,
                 ProfileUrl = profilePageUrl,
             };
@@ -366,6 +369,35 @@ public class EwrcApiService
         {
             _debug.Log($"Fout profiel ophalen: {ex.Message}");
             throw new Exception($"Kan rijdersprofiel niet laden: {ex.Message}", ex);
+        }
+    }
+
+    // GETs a URL and parses the body as a JObject; returns null on 404 / parse failure.
+    private async Task<JObject?> TryGetJObjectAsync(string url)
+    {
+        if (await TryGetJTokenAsync(url) is JObject obj) return obj;
+        return null;
+    }
+
+    // GETs a URL and parses the body as a JToken; returns null on a non-success
+    // status (e.g. 404) so a missing endpoint doesn't abort the whole load.
+    private async Task<JToken?> TryGetJTokenAsync(string url)
+    {
+        try
+        {
+            using var response = await _http.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                _debug.Log($"  {(int)response.StatusCode} bij {url}");
+                return null;
+            }
+            var json = await response.Content.ReadAsStringAsync();
+            return JToken.Parse(json);
+        }
+        catch (Exception ex)
+        {
+            _debug.Log($"  Fout bij {url}: {ex.Message}");
+            return null;
         }
     }
 

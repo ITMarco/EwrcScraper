@@ -1,7 +1,7 @@
 #define AppName      "EWRC Scraper"
 ; AppVersion can be overridden from the command line: ISCC /DAppVersion=1.3.2 ...
 #ifndef AppVersion
-  #define AppVersion "1.4.0"
+  #define AppVersion "1.4.1"
 #endif
 #define AppPublisher "Rally Club Holland"
 #define AppURL       "https://www.rallyclubholland.nl"
