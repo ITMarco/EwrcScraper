@@ -13,6 +13,11 @@ public partial class MainViewModel : ObservableObject
     public DriverSearchViewModel RijderZoeken { get; }
     public DebugViewModel Debug { get; }
 
+    public PreferencesService VoorkeurenService { get; }
+    public UpdateService UpdateService { get; }
+
+    public UpdateInfo? BeschikbareUpdate { get; private set; }
+
     private readonly PreferencesService _prefsService;
 
     [ObservableProperty]
@@ -31,6 +36,7 @@ public partial class MainViewModel : ObservableObject
         DriverSearchViewModel rijderZoeken,
         DebugViewModel debugVm,
         PreferencesService prefsService,
+        UpdateService updateService,
         DebugService debug)
     {
         RallySelectie = rallySelectie;
@@ -39,6 +45,8 @@ public partial class MainViewModel : ObservableObject
         RijderZoeken = rijderZoeken;
         Debug = debugVm;
         _prefsService = prefsService;
+        VoorkeurenService = prefsService;
+        UpdateService = updateService;
         _voorkeuren = prefsService.Load();
 
         debug.LogAdded += msg => StatusBalk = msg;
@@ -53,6 +61,9 @@ public partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrEmpty(prefs.LedenlijstPad))
             Ledenlijst.LaadVanPad(prefs.LedenlijstPad);
+
+        if (prefs.ControleerUpdates)
+            BeschikbareUpdate = await UpdateService.CheckForUpdateAsync();
     }
 
     public void VoorkeurenOpslaan(double x, double y, double w, double h)
@@ -62,11 +73,11 @@ public partial class MainViewModel : ObservableObject
         prefs.WindowY = y;
         prefs.WindowWidth = w;
         prefs.WindowHeight = h;
-        prefs.GeselecteerdeCountryIds = RallySelectie.GeselecteerdeLandIds;
+        if (RallySelectie.Landen.Count > 0)
+            prefs.GeselecteerdeCountryIds = RallySelectie.GeselecteerdeLandIds;
         prefs.LedenlijstPad = Ledenlijst.LedenlijstPad;
         _prefsService.Save(prefs);
 
-        // Log what was saved so the user can verify in the debug window
         var landen = string.Join(", ", prefs.GeselecteerdeCountryIds);
         StatusBalk = $"Voorkeuren opgeslagen. Landen: [{landen}]";
     }

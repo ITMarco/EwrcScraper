@@ -45,9 +45,13 @@
                            Foreground="White" VerticalAlignment="Center"/>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                             HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="BtnVoorkeuren" Content="⚙ Voorkeuren"
+                            Style="{StaticResource SecondaryButton}"
+                            Background="Transparent" Foreground="White" BorderBrush="#5580A0"
+                            Margin="0,0,8,0" Click="BtnVoorkeuren_Click"/>
                     <Button x:Name="BtnDebug" Content="🛠 Debug" Style="{StaticResource SecondaryButton}"
                             Background="Transparent" Foreground="White" BorderBrush="#5580A0"
-                            Margin="0,0,8,0" Click="BtnDebug_Click"/>
+                            Margin="0" Click="BtnDebug_Click"/>
                 </StackPanel>
                 <TextBlock Text="Rally Club Holland — inschrijvingen vergelijker"
                            FontSize="11" Foreground="#8AAAC8" VerticalAlignment="Center"

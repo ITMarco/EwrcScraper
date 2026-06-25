@@ -31,6 +31,16 @@ public partial class MainWindow : Window
         Height = prefs.WindowHeight;
 
         await _vm.InitialiserenAsync();
+
+        if (_vm.Voorkeuren.DebugVensterZichtbaar)
+            OpenDebugWindow();
+
+        if (_vm.BeschikbareUpdate != null)
+        {
+            var dialog = new Views.UpdateDialog(_vm.BeschikbareUpdate);
+            dialog.Owner = this;
+            dialog.ShowDialog();
+        }
     }
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
@@ -40,7 +50,7 @@ public partial class MainWindow : Window
         base.OnClosing(e);
     }
 
-    private void BtnDebug_Click(object sender, RoutedEventArgs e)
+    private void OpenDebugWindow()
     {
         if (_debugWindow == null || !_debugWindow.IsVisible)
         {
@@ -52,6 +62,17 @@ public partial class MainWindow : Window
         {
             _debugWindow.Activate();
         }
+    }
+
+    private void BtnDebug_Click(object sender, RoutedEventArgs e) => OpenDebugWindow();
+
+    private void BtnVoorkeuren_Click(object sender, RoutedEventArgs e)
+    {
+        var huidigePrefs = _vm.VoorkeurenService.Load();
+        var vm = new PreferencesViewModel(huidigePrefs);
+        var dialog = new Views.PreferencesWindow(vm, _vm.VoorkeurenService);
+        dialog.Owner = this;
+        dialog.ShowDialog();
     }
 
     private void JaarTerug_Click(object sender, RoutedEventArgs e)

@@ -9,18 +9,19 @@ public class EwrcApiService
 {
     private readonly HttpClient _http;
     private readonly DebugService _debug;
-    private const string ApiBase = "https://api-next.ewrc-results.com";
+    private readonly string _apiBase;
 
-    public EwrcApiService(HttpClient http, DebugService debug)
+    public EwrcApiService(HttpClient http, DebugService debug, string apiBase = "https://api-next.ewrc-results.com")
     {
         _http = http;
         _debug = debug;
+        _apiBase = apiBase;
     }
 
     public async Task<List<Country>> GetCountriesAsync(int year)
     {
         _debug.Log($"Landen ophalen voor jaar {year}...");
-        var url = $"{ApiBase}/calendar/{year}/natall";
+        var url = $"{_apiBase}/calendar/{year}/natall";
         try
         {
             var json = await _http.GetStringAsync(url);
@@ -57,7 +58,7 @@ public class EwrcApiService
 
         foreach (var countryId in idList)
         {
-            var url = $"{ApiBase}/calendar/{year}/list?nat={countryId}";
+            var url = $"{_apiBase}/calendar/{year}/list?nat={countryId}";
             _debug.Log($"  Ophalen land {countryId}: {url}");
             try
             {
@@ -105,8 +106,8 @@ public class EwrcApiService
         _debug.Log($"Inschrijvingen ophalen voor {rallyName} (id={rallyId})...");
         var urls = new[]
         {
-            $"{ApiBase}/event/{rallyId}/entries",
-            $"{ApiBase}/entries/{rallyId}"
+            $"{_apiBase}/event/{rallyId}/entries",
+            $"{_apiBase}/entries/{rallyId}"
         };
 
         string? json = null;
@@ -203,7 +204,7 @@ public class EwrcApiService
     public async Task<List<SearchResult>> SearchAsync(string query)
     {
         _debug.Log($"Zoeken naar: {query}");
-        var url = $"{ApiBase}/search?query={Uri.EscapeDataString(query)}&limit=10";
+        var url = $"{_apiBase}/search?query={Uri.EscapeDataString(query)}&limit=10";
         try
         {
             var json = await _http.GetStringAsync(url);
@@ -233,8 +234,8 @@ public class EwrcApiService
     public async Task<DriverProfile> GetDriverProfileAsync(string driverId)
     {
         _debug.Log($"Rijdersprofiel ophalen: id={driverId}");
-        var profileUrl = $"{ApiBase}/driver/{driverId}";
-        var statsUrl = $"{ApiBase}/driver/{driverId}/categories?all=true";
+        var profileUrl = $"{_apiBase}/driver/{driverId}";
+        var statsUrl = $"{_apiBase}/driver/{driverId}/categories?all=true";
 
         try
         {

@@ -11,17 +11,22 @@ public class PreferencesService
 
     public AppPreferences Load()
     {
+        if (!File.Exists(ConfigPath))
+            return new AppPreferences { GeselecteerdeCountryIds = new() { 24, 25, 10 } };
+
         try
         {
-            if (File.Exists(ConfigPath))
-            {
-                var json = File.ReadAllText(ConfigPath);
-                return JsonConvert.DeserializeObject<AppPreferences>(json) ?? new AppPreferences();
-            }
+            var json = File.ReadAllText(ConfigPath);
+            return JsonConvert.DeserializeObject<AppPreferences>(json) ?? FirstRunDefaults();
         }
-        catch { }
-        return new AppPreferences();
+        catch
+        {
+            return FirstRunDefaults();
+        }
     }
+
+    private static AppPreferences FirstRunDefaults() =>
+        new() { GeselecteerdeCountryIds = new() { 24, 25, 10 } };
 
     public void Save(AppPreferences prefs)
     {
