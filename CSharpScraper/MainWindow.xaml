@@ -116,7 +116,7 @@
                                     Style="{StaticResource SecondaryButton}" Padding="4,5"
                                     Click="JaarVooruit_Click"/>
                         </StackPanel>
-                        <Button Content="🔄 Rally lijst ophalen"
+                        <Button Content="🔄 Rally's inladen/vernieuwen"
                                 Style="{StaticResource PrimaryButton}"
                                 Command="{Binding RallySelectie.UpdateRallyLijstCommand}"/>
                         <TextBlock Text="{Binding RallySelectie.GeselecteerdeLandenSamenvatting}"
@@ -297,9 +297,6 @@
 
                     <!-- Knoppen bovenaan -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Content="⬇ Rally info ophalen" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding HaalRallyInfoOpCommand}" Margin="0,0,8,0"
-                                IsEnabled="{Binding Vergelijking.IsBezig, Converter={StaticResource InvBool}}"/>
                         <Button Content="🔍 Vergelijk met ledenlijst" Style="{StaticResource AccentButton}"
                                 Command="{Binding VergelijkCommand}" Margin="0,0,8,0"/>
                         <TextBlock Text="{Binding Vergelijking.StatusTekst}"

@@ -1,5 +1,5 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "releaseDate": "2026-06-25",
-  "releaseNotes": "Versienummer zichtbaar in voorkeuren; update-check knop toegevoegd; standalone pakket repaired."
+  "releaseNotes": "Rally lijst laadt automatisch bij opstarten; knoptekst en Tab 3 interface opgeruimd."
 }

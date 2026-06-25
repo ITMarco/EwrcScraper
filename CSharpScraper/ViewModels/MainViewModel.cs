@@ -54,6 +54,7 @@ public partial class MainViewModel : ObservableObject
 
     public async Task InitialiserenAsync()
     {
+        var prefsBestaatAl = File.Exists(PreferencesService.ConfigPath);
         var prefs = _prefsService.Load();
         Voorkeuren = prefs;
 
@@ -61,6 +62,10 @@ public partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrEmpty(prefs.LedenlijstPad))
             Ledenlijst.LaadVanPad(prefs.LedenlijstPad);
+
+        // Auto-load rally list on subsequent runs; skip on very first run (no prefs file yet)
+        if (prefsBestaatAl && prefs.GeselecteerdeCountryIds.Count > 0)
+            await RallySelectie.UpdateRallyLijstCommand.ExecuteAsync(null);
 
         if (prefs.ControleerUpdates)
             BeschikbareUpdate = await UpdateService.CheckForUpdateAsync();
