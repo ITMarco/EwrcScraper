@@ -22,11 +22,15 @@ public partial class PreferencesWindow : Window
         _vm.IsUpdateAanHetControleren = true;
         _vm.UpdateStatusTekst = "Controleren...";
 
-        var update = await _vm.UpdateService.CheckForUpdateAsync();
+        var (update, geslaagd) = await _vm.UpdateService.CheckForUpdateAsync();
 
         _vm.IsUpdateAanHetControleren = false;
 
-        if (update != null)
+        if (!geslaagd)
+        {
+            _vm.UpdateStatusTekst = "⚠ Kan updates niet ophalen — controleer uw verbinding.";
+        }
+        else if (update != null)
         {
             _vm.UpdateStatusTekst = $"Nieuwe versie beschikbaar: v{update.VersieNummer}";
             var dialog = new UpdateDialog(update);
@@ -35,7 +39,7 @@ public partial class PreferencesWindow : Window
         }
         else
         {
-            _vm.UpdateStatusTekst = "✔ Je hebt de nieuwste versie.";
+            _vm.UpdateStatusTekst = $"✔ Je hebt de nieuwste versie (v{_vm.HuidigeVersie}).";
         }
     }
 

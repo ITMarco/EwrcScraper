@@ -1,5 +1,5 @@
 {
-  "version": "1.2.2",
+  "version": "1.2.3",
   "releaseDate": "2026-06-25",
-  "releaseNotes": "Rally lijst laadt automatisch bij opstarten; knoptekst en Tab 3 interface opgeruimd."
+  "releaseNotes": "Update-controle gerepareerd; betere foutmeldingen bij netwerkproblemen."
 }

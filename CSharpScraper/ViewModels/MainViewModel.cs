@@ -68,7 +68,7 @@ public partial class MainViewModel : ObservableObject
             await RallySelectie.UpdateRallyLijstCommand.ExecuteAsync(null);
 
         if (prefs.ControleerUpdates)
-            BeschikbareUpdate = await UpdateService.CheckForUpdateAsync();
+            (BeschikbareUpdate, _) = await UpdateService.CheckForUpdateAsync();
     }
 
     public void VoorkeurenOpslaan(double x, double y, double w, double h)
