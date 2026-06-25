@@ -17,6 +17,28 @@ public partial class PreferencesWindow : Window
         DataContext = vm;
     }
 
+    private async void CheckNu_Click(object sender, RoutedEventArgs e)
+    {
+        _vm.IsUpdateAanHetControleren = true;
+        _vm.UpdateStatusTekst = "Controleren...";
+
+        var update = await _vm.UpdateService.CheckForUpdateAsync();
+
+        _vm.IsUpdateAanHetControleren = false;
+
+        if (update != null)
+        {
+            _vm.UpdateStatusTekst = $"Nieuwe versie beschikbaar: v{update.VersieNummer}";
+            var dialog = new UpdateDialog(update);
+            dialog.Owner = this;
+            dialog.ShowDialog();
+        }
+        else
+        {
+            _vm.UpdateStatusTekst = "✔ Je hebt de nieuwste versie.";
+        }
+    }
+
     private void Opslaan_Click(object sender, RoutedEventArgs e)
     {
         var prefs = _prefs.Load();

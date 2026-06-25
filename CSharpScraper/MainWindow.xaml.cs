@@ -69,7 +69,7 @@ public partial class MainWindow : Window
     private void BtnVoorkeuren_Click(object sender, RoutedEventArgs e)
     {
         var huidigePrefs = _vm.VoorkeurenService.Load();
-        var vm = new PreferencesViewModel(huidigePrefs);
+        var vm = new PreferencesViewModel(huidigePrefs, _vm.UpdateService);
         var dialog = new Views.PreferencesWindow(vm, _vm.VoorkeurenService);
         dialog.Owner = this;
         dialog.ShowDialog();
