@@ -59,14 +59,8 @@
         <Border DockPanel.Dock="Bottom" Background="White"
                 BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,1,0,0"
                 Padding="12,6">
-            <DockPanel>
-                <Button x:Name="BtnLedenlijst" Content="📂 Ledenlijst laden"
-                        Style="{StaticResource SecondaryButton}" Padding="10,5"
-                        DockPanel.Dock="Right" Margin="8,0,0,0"
-                        Command="{Binding Ledenlijst.BrowseLedenlijstCommand}"/>
-                <TextBlock Text="{Binding StatusBalk}" Style="{StaticResource StatusLabel}"
-                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-            </DockPanel>
+            <TextBlock Text="{Binding StatusBalk}" Style="{StaticResource StatusLabel}"
+                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
         </Border>
 
         <!-- Tabs -->
@@ -81,83 +75,166 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Links: landen + jaar -->
-                    <DockPanel Grid.Column="0">
-                        <Label Content="Landen" Style="{StaticResource HeaderLabel}" DockPanel.Dock="Top"/>
-                        <StackPanel DockPanel.Dock="Bottom" Orientation="Vertical" Margin="0,8,0,0">
-                            <Label Content="Jaar" Style="{StaticResource HeaderLabel}"/>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Content="◀" Width="30" Margin="0,0,4,0"
-                                        Style="{StaticResource SecondaryButton}" Padding="4,5"
-                                        Click="JaarTerug_Click"/>
-                                <TextBlock Text="{Binding RallySelectie.GeselecteerdJaar}"
-                                           FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
-                                           Foreground="{StaticResource PrimaryBrush}" Width="50"
-                                           TextAlignment="Center"/>
-                                <Button Content="▶" Width="30" Margin="4,0,0,0"
-                                        Style="{StaticResource SecondaryButton}" Padding="4,5"
-                                        Click="JaarVooruit_Click"/>
-                            </StackPanel>
-                            <Button Content="🔄 Rally lijst ophalen" Margin="0,8,0,0"
-                                    Style="{StaticResource PrimaryButton}"
-                                    Command="{Binding RallySelectie.UpdateRallyLijstCommand}"/>
-                            <TextBlock Text="{Binding RallySelectie.StatusTekst}"
-                                       Style="{StaticResource StatusLabel}" Margin="0,6,0,0"
-                                       TextWrapping="Wrap"/>
+                    <StackPanel Grid.Column="0">
+                        <!-- Landen expander -->
+                        <Expander IsExpanded="{Binding RallySelectie.LandenUitgevouwen, Mode=TwoWay}"
+                                  Margin="0,0,0,8">
+                            <Expander.Header>
+                                <TextBlock FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           Text="Landen"/>
+                            </Expander.Header>
+                            <ListBox ItemsSource="{Binding RallySelectie.Landen}"
+                                     MaxHeight="300"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
+                                     Margin="0,4,0,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                  Content="{Binding DisplayName}" Margin="2"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Expander>
+
+                        <!-- Jaar + ophalen -->
+                        <Label Content="Jaar" Style="{StaticResource HeaderLabel}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Button Content="◀" Width="30" Margin="0,0,4,0"
+                                    Style="{StaticResource SecondaryButton}" Padding="4,5"
+                                    Click="JaarTerug_Click"/>
+                            <TextBlock Text="{Binding RallySelectie.GeselecteerdJaar}"
+                                       FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
+                                       Foreground="{StaticResource PrimaryBrush}" Width="50"
+                                       TextAlignment="Center"/>
+                            <Button Content="▶" Width="30" Margin="4,0,0,0"
+                                    Style="{StaticResource SecondaryButton}" Padding="4,5"
+                                    Click="JaarVooruit_Click"/>
+                        </StackPanel>
+                        <Button Content="🔄 Rally lijst ophalen"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding RallySelectie.UpdateRallyLijstCommand}"/>
+                        <TextBlock Text="{Binding RallySelectie.GeselecteerdeLandenSamenvatting}"
+                                   Margin="0,6,0,2" FontSize="11" Foreground="#446"
+                                   TextWrapping="Wrap" FontStyle="Italic"/>
+                        <TextBlock Text="{Binding RallySelectie.StatusTekst}"
+                                   Style="{StaticResource StatusLabel}" Margin="0,2,0,0"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource AppBorderBrush}"/>
+
+                    <!-- Rechts: rally selectie (verborgen terwijl deelnemersraster getoond wordt) -->
+                    <DockPanel Grid.Column="2"
+                               Visibility="{Binding Vergelijking.ToonInschrijvingenRaster, Converter={StaticResource InvBoolToVis}}">
+                        <Label Content="Rally's" Style="{StaticResource HeaderLabel}" DockPanel.Dock="Top"/>
+
+                        <!-- Toolbar: filter + selectie + sortering -->
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Width="160" Margin="0,0,8,0" Padding="6,4"
+                                     Text="{Binding RallySelectie.Filter, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderBrush="{StaticResource AppBorderBrush}"
+                                     Tag="Filter..."/>
+                            <Button Content="Alle aan" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                                    Margin="0,0,4,0" Command="{Binding RallySelectie.SelecteerAlleCommand}"/>
+                            <Button Content="Alle uit" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                                    Margin="0,0,12,0" Command="{Binding RallySelectie.DeselecteerAlleCommand}"/>
+                            <TextBlock Text="Sorteer:" VerticalAlignment="Center" FontSize="11"
+                                       Foreground="#556" Margin="0,0,6,0"/>
+                            <Button Content="🏁 Land" Style="{StaticResource SecondaryButton}" Padding="7,5"
+                                    Margin="0,0,3,0" Command="{Binding RallySelectie.SorteerOpLandCommand}"
+                                    ToolTip="Sorteer op land (standaard)"/>
+                            <Button Content="📅 ↑" Style="{StaticResource SecondaryButton}" Padding="7,5"
+                                    Margin="0,0,3,0" Command="{Binding RallySelectie.SorteerOpDatumAscCommand}"
+                                    ToolTip="Sorteer op datum (oud → nieuw)"/>
+                            <Button Content="📅 ↓" Style="{StaticResource SecondaryButton}" Padding="7,5"
+                                    Command="{Binding RallySelectie.SorteerOpDatumDescCommand}"
+                                    ToolTip="Sorteer op datum (nieuw → oud)"/>
                         </StackPanel>
 
-                        <ListBox ItemsSource="{Binding RallySelectie.Landen}"
+                        <!-- Rally info ophalen knop onderaan -->
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="⬇ Rally info ophalen" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding HaalRallyInfoOpCommand}" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding Vergelijking.StatusTekst}"
+                                       Style="{StaticResource StatusLabel}" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Rally lijst als ListBox met checkboxes (single-click) -->
+                        <ListBox ItemsSource="{Binding RallySelectie.GefilterdeEvents}"
+                                 BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                 BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                                 VirtualizingPanel.IsVirtualizing="True">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="4,3"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                              Content="{Binding DisplayName}" Margin="2"/>
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Flag}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Width="200"
+                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding From}" Foreground="#778" Margin="8,0,4,0"
+                                                       Width="80" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Country}" Foreground="#778"
+                                                       Width="35" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </CheckBox>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </DockPanel>
 
-                    <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
-                                  Background="{StaticResource AppBorderBrush}"/>
+                    <!-- Rechts: deelnemersraster (verschijnt na 'Rally info ophalen') -->
+                    <DockPanel Grid.Column="2"
+                               Visibility="{Binding Vergelijking.ToonInschrijvingenRaster, Converter={StaticResource BoolToVis}}">
 
-                    <!-- Rechts: rally lijst -->
-                    <DockPanel Grid.Column="2">
-                        <Label Content="Rally's" Style="{StaticResource HeaderLabel}" DockPanel.Dock="Top"/>
+                        <!-- Header met terug-knop en samenvatting -->
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <Button Content="← Rally selectie" Style="{StaticResource SecondaryButton}"
+                                    Padding="8,5" DockPanel.Dock="Left"
+                                    Command="{Binding Vergelijking.TerugNaarRallySelectieCommand}"/>
+                            <TextBlock Text="{Binding Vergelijking.InschrijvingenSamenvatting}"
+                                       Style="{StaticResource StatusLabel}" Margin="12,0,0,0"
+                                       VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        </DockPanel>
+
+                        <!-- Filter -->
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
-                            <TextBox Width="200" Margin="0,0,8,0" Padding="6,4"
-                                     Text="{Binding RallySelectie.Filter, UpdateSourceTrigger=PropertyChanged}"
-                                     BorderBrush="{StaticResource AppBorderBrush}">
-                                <TextBox.Style>
-                                    <Style TargetType="TextBox">
-                                        <Style.Resources>
-                                            <VisualBrush x:Key="HintBrush" TileMode="None" Stretch="None" AlignmentX="Left">
-                                                <VisualBrush.Visual>
-                                                    <TextBlock Text="Filter..." Foreground="#AAA" Margin="6,4"/>
-                                                </VisualBrush.Visual>
-                                            </VisualBrush>
-                                        </Style.Resources>
-                                        <Style.Triggers>
-                                            <Trigger Property="Text" Value="">
-                                                <Setter Property="Background" Value="{StaticResource HintBrush}"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBox.Style>
-                            </TextBox>
-                            <Button Content="Alle aan" Style="{StaticResource SecondaryButton}" Padding="8,5"
-                                    Margin="0,0,4,0" Command="{Binding RallySelectie.SelecteerAlleCommand}"/>
-                            <Button Content="Alle uit" Style="{StaticResource SecondaryButton}" Padding="8,5"
-                                    Command="{Binding RallySelectie.DeselecteerAlleCommand}"/>
+                            <TextBox Width="220" Padding="6,4" Margin="0,0,8,0"
+                                     Text="{Binding Vergelijking.FilterInschrijvingen, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderBrush="{StaticResource AppBorderBrush}"/>
+                            <TextBlock Text="Filter op naam of rally"
+                                       Style="{StaticResource StatusLabel}" VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding RallySelectie.GefilterdeEvents}"
-                                  BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                        <!-- Export knoppen onderaan -->
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="📋 Kopieer alles" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                                    Command="{Binding Vergelijking.KopieerInschrijvingenCommand}" Margin="0,0,6,0"/>
+                            <Button Content="💾 CSV" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                                    Command="{Binding Vergelijking.ExporteerInschrijvingenCsvCommand}" Margin="0,0,6,0"/>
+                            <Button Content="📊 Excel" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                                    Command="{Binding Vergelijking.ExporteerInschrijvingenExcelCommand}"/>
+                        </StackPanel>
+
+                        <!-- Deelnemers DataGrid -->
+                        <DataGrid x:Name="InschrijvingenGrid"
+                                  ItemsSource="{Binding Vergelijking.GefilterdeInschrijvingen}"
+                                  BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
+                                  PreviewMouseRightButtonDown="InschrijvingenGrid_PreviewMouseRightButtonDown">
                             <DataGrid.Columns>
-                                <DataGridCheckBoxColumn Header="" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="36"/>
-                                <DataGridTextColumn Header="🏁 Rally" Binding="{Binding DisplayName}" Width="*"/>
-                                <DataGridTextColumn Header="Van" Binding="{Binding From}" Width="90"/>
-                                <DataGridTextColumn Header="T/m" Binding="{Binding Until}" Width="90"/>
-                                <DataGridTextColumn Header="Land" Binding="{Binding Country}" Width="60"/>
+                                <DataGridTextColumn Header="Naam"      Binding="{Binding Name}"      Width="*"/>
+                                <DataGridTextColumn Header="Rol"       Binding="{Binding TypeNl}"    Width="80"/>
+                                <DataGridTextColumn Header="EWRC Nr."  Binding="{Binding Number}"    Width="80"/>
+                                <DataGridTextColumn Header="Rally"     Binding="{Binding RallyName}" Width="200"/>
+                                <DataGridTextColumn Header="Datum"     Binding="{Binding RallyDate}" Width="90"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
@@ -172,10 +249,11 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
+                    <!-- Toolbar -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                         <Button Content="📂 Ledenlijst laden" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding Ledenlijst.BrowseLedenlijstCommand}" Margin="0,0,12,0"/>
-                        <TextBlock VerticalAlignment="Center">
+                        <TextBlock VerticalAlignment="Center" Style="{StaticResource StatusLabel}">
                             <TextBlock.Text>
                                 <MultiBinding StringFormat="{}{0}  —  {1} leden geladen">
                                     <Binding Path="Ledenlijst.LedenlijstPad"/>
@@ -185,20 +263,21 @@
                         </TextBlock>
                     </StackPanel>
 
-                    <Border Grid.Row="1" Background="White" BorderBrush="{StaticResource AppBorderBrush}"
-                            BorderThickness="1" CornerRadius="4" Padding="16">
-                        <TextBlock TextWrapping="Wrap" Foreground="#556" FontSize="13">
-                            <Run FontWeight="SemiBold">Ondersteunde formaten:</Run>
-                            <LineBreak/>
-                            • CSV (komma of puntkomma gescheiden)<LineBreak/>
-                            • Excel (.xlsx)<LineBreak/>
-                            <LineBreak/>
-                            <Run FontWeight="SemiBold">Vereiste kolommen:</Run>
-                            <LineBreak/>
-                            EwrcNrPilot, EwrcNrCoPilot, Leden Nr., E-mail adres<LineBreak/>
-                            Overige kolommen worden automatisch herkend.
-                        </TextBlock>
-                    </Border>
+                    <!-- Ledenlijst grid -->
+                    <DataGrid x:Name="LedenlijstGrid"
+                              Grid.Row="1"
+                              ItemsSource="{Binding Ledenlijst.LedenGrid}"
+                              BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
+                              PreviewMouseRightButtonDown="LedenlijstGrid_PreviewMouseRightButtonDown">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Leden Nr." Binding="{Binding LedenNr}" Width="80"/>
+                            <DataGridTextColumn Header="Voornaam" Binding="{Binding Voornaam}" Width="120"/>
+                            <DataGridTextColumn Header="Achternaam" Binding="{Binding Achternaam}" Width="140"/>
+                            <DataGridTextColumn Header="EWRC Rijder" Binding="{Binding EwrcNrPilot}" Width="90"/>
+                            <DataGridTextColumn Header="EWRC Bijrijder" Binding="{Binding EwrcNrCoPilot}" Width="100"/>
+                            <DataGridTextColumn Header="E-mail" Binding="{Binding EmailAdres}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </Grid>
             </TabItem>
 
@@ -216,7 +295,7 @@
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                         <Button Content="⬇ Rally info ophalen" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding HaalRallyInfoOpCommand}" Margin="0,0,8,0"
-                                IsEnabled="{Binding Vergelijking.IsBezig, Converter={StaticResource InvBoolToVis}}"/>
+                                IsEnabled="{Binding Vergelijking.IsBezig, Converter={StaticResource InvBool}}"/>
                         <Button Content="🔍 Vergelijk met ledenlijst" Style="{StaticResource AccentButton}"
                                 Command="{Binding VergelijkCommand}" Margin="0,0,8,0"/>
                         <TextBlock Text="{Binding Vergelijking.StatusTekst}"
@@ -242,8 +321,10 @@
                             <TextBlock Text="Filter op naam, rally of e-mail"
                                        Style="{StaticResource StatusLabel}" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <DataGrid ItemsSource="{Binding Vergelijking.GefilterdeMatches}"
-                                  BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                        <DataGrid x:Name="VergelijkGrid"
+                                  ItemsSource="{Binding Vergelijking.GefilterdeMatches}"
+                                  BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
+                                  PreviewMouseRightButtonDown="VergelijkGrid_PreviewMouseRightButtonDown">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Leden Nr." Binding="{Binding LedenNr}" Width="80"/>
                                 <DataGridTextColumn Header="Naam" Binding="{Binding VolledigeNaam}" Width="160"/>

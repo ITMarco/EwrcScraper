@@ -24,15 +24,16 @@ public class EwrcApiService
         try
         {
             var json = await _http.GetStringAsync(url);
-            var array = JArray.Parse(json);
+            _debug.Log($"Landen API antwoord (eerste 200 tekens): {json[..Math.Min(200, json.Length)]}");
+            var array = ParseToArray(json);
             var result = new List<Country>();
             foreach (var item in array)
             {
                 result.Add(new Country
                 {
                     Id = item["id"]?.Value<int>() ?? 0,
-                    Name = item["name"]?.Value<string>() ?? string.Empty,
-                    Code = item["code"]?.Value<string>() ?? string.Empty,
+                    Name = ExtractName(item["name"]),
+                    Code = item["shortcut"]?.Value<string>() ?? item["code"]?.Value<string>() ?? string.Empty,
                     Flag = item["flag"]?.Value<string>() ?? string.Empty,
                 });
             }
@@ -48,73 +49,155 @@ public class EwrcApiService
 
     public async Task<List<RallyEvent>> GetCalendarAsync(int year, IEnumerable<int> countryIds)
     {
-        var natParam = string.Join(",", countryIds);
-        _debug.Log($"Kalender ophalen: jaar={year}, landen={natParam}");
-        var url = $"{ApiBase}/calendar/{year}/list?nat={natParam}";
-        try
+        var idList = countryIds.ToList();
+        _debug.Log($"Kalender ophalen: jaar={year}, {idList.Count} landen: [{string.Join(",", idList)}]");
+
+        var result = new List<RallyEvent>();
+        var seen = new HashSet<int>();
+
+        foreach (var countryId in idList)
         {
-            var json = await _http.GetStringAsync(url);
-            var array = JArray.Parse(json);
-            var result = new List<RallyEvent>();
-            foreach (var item in array)
+            var url = $"{ApiBase}/calendar/{year}/list?nat={countryId}";
+            _debug.Log($"  Ophalen land {countryId}: {url}");
+            try
             {
-                result.Add(new RallyEvent
+                var json = await _http.GetStringAsync(url);
+                var weeks = ParseToArray(json);
+
+                // Response is grouped by week: [{week:1, events:[...]}, {week:2, events:[...]}, ...]
+                foreach (var week in weeks)
                 {
-                    Id = item["id"]?.Value<int>() ?? 0,
-                    Name = item["name"]?.Value<string>() ?? string.Empty,
-                    Season = item["season"]?.Value<int>() ?? year,
-                    From = item["from"]?.Value<string>() ?? string.Empty,
-                    Until = item["until"]?.Value<string>() ?? string.Empty,
-                    Days = item["days"]?.Value<int>() ?? 0,
-                    Country = item["country"]?.Value<string>() ?? string.Empty,
-                    Flag = item["flag"]?.Value<string>() ?? string.Empty,
-                    Slug = item["slug"]?.Value<string>() ?? string.Empty,
-                    Cancelled = item["cancelled"]?.Value<int>() ?? 0,
-                    Url = $"https://www.ewrc-results.com/event/{item["id"]?.Value<int>()}-{item["slug"]?.Value<string>()}/",
-                });
+                    var events = week["events"] as JArray ?? new JArray();
+                    foreach (var item in events)
+                    {
+                        var id = item["id"]?.Value<int>() ?? 0;
+                        if (id == 0 || !seen.Add(id)) continue;
+                        result.Add(new RallyEvent
+                        {
+                            Id = id,
+                            Name = ExtractName(item["name"]),
+                            Season = item["season"]?.Value<int>() ?? year,
+                            From = item["from"]?.Value<string>() ?? string.Empty,
+                            Until = item["until"]?.Value<string>() ?? string.Empty,
+                            Days = item["days"]?.Value<int>() ?? 0,
+                            Country = item["country"]?.Value<string>() ?? string.Empty,
+                            Flag = item["flag"]?.Value<string>() ?? string.Empty,
+                            Slug = item["slug"]?.Value<string>() ?? string.Empty,
+                            Cancelled = item["cancelled"]?.Value<int>() ?? 0,
+                            Url = $"https://www.ewrc-results.com/event/{id}-{item["slug"]?.Value<string>()}/",
+                        });
+                    }
+                }
+                _debug.Log($"  Land {countryId}: {seen.Count} unieke rally's tot nu toe.");
             }
-            _debug.Log($"{result.Count} rally's geladen.");
-            return result;
+            catch (Exception ex)
+            {
+                _debug.Log($"  Fout land {countryId}: {ex.Message}");
+            }
         }
-        catch (Exception ex)
-        {
-            _debug.Log($"Fout bij ophalen kalender: {ex.Message}");
-            throw new Exception($"Kan kalender niet ophalen van eWRC: {ex.Message}", ex);
-        }
+
+        _debug.Log($"{result.Count} rally's geladen voor {idList.Count} landen.");
+        return result;
     }
 
     public async Task<List<DriverEntry>> GetEntriesAsync(int rallyId, string rallyName)
     {
         _debug.Log($"Inschrijvingen ophalen voor {rallyName} (id={rallyId})...");
-        var url = $"{ApiBase}/event/{rallyId}/entries";
+        var urls = new[]
+        {
+            $"{ApiBase}/event/{rallyId}/entries",
+            $"{ApiBase}/entries/{rallyId}"
+        };
+
+        string? json = null;
+        foreach (var url in urls)
+        {
+            try
+            {
+                _debug.Log($"  Probeer: {url}");
+                json = await _http.GetStringAsync(url);
+                break;
+            }
+            catch (Exception ex)
+            {
+                _debug.Log($"  Mislukt ({url}): {ex.Message}");
+            }
+        }
+
+        if (json == null)
+        {
+            _debug.Log($"  Beide endpoints mislukt voor {rallyName}.");
+            return new List<DriverEntry>();
+        }
+
+        _debug.Log($"  Antwoord (eerste 200): {json[..Math.Min(200, json.Length)]}");
+
         try
         {
-            var json = await _http.GetStringAsync(url);
-            var array = JArray.Parse(json);
             var entries = new List<DriverEntry>();
+            var token = JToken.Parse(json);
 
-            foreach (var item in array)
+            // Determine where the entry list lives
+            JArray entryArray;
+            if (token is JArray arr)
             {
-                var driverName = item["driver"]?["name"]?.Value<string>();
-                var driverNum = item["driver"]?["id"]?.Value<int>().ToString();
-                var coName = item["codriver"]?["name"]?.Value<string>();
-                var coNum = item["codriver"]?["id"]?.Value<int>().ToString();
+                entryArray = arr;
+            }
+            else if (token is JObject obj && obj["entries"] is JArray ea)
+            {
+                entryArray = ea;
+            }
+            else if (token is JObject obj2)
+            {
+                // Fallback: top-level drivers / codrivers arrays
+                if (obj2["drivers"] is JArray drivers)
+                    foreach (var drv in drivers)
+                        AddEntry(entries, drv, "Driver", rallyName, rallyId);
 
-                if (!string.IsNullOrEmpty(driverName))
-                    entries.Add(new DriverEntry { Name = driverName, Number = driverNum ?? string.Empty, Type = "Driver", RallyName = rallyName, RallyId = rallyId });
+                if (obj2["codrivers"] is JArray codrivers)
+                    foreach (var codrv in codrivers)
+                        AddEntry(entries, codrv, "CoPilot", rallyName, rallyId);
 
-                if (!string.IsNullOrEmpty(coName))
-                    entries.Add(new DriverEntry { Name = coName, Number = coNum ?? string.Empty, Type = "CoPilot", RallyName = rallyName, RallyId = rallyId });
+                _debug.Log($"  {entries.Count} inschrijvingen (top-level arrays) voor {rallyName}.");
+                return entries;
+            }
+            else
+            {
+                _debug.Log($"  Onbekende structuur voor {rallyName}.");
+                return entries;
             }
 
-            _debug.Log($"{entries.Count} inschrijvingen geladen voor {rallyName}.");
+            foreach (var item in entryArray)
+            {
+                // driver can be under "driver" or "pilot"
+                var drv = item["driver"] ?? item["pilot"];
+                if (drv != null) AddEntry(entries, drv, "Driver", rallyName, rallyId);
+
+                // codriver can be under "codriver" or "copilot"
+                var codrv = item["codriver"] ?? item["copilot"];
+                if (codrv != null) AddEntry(entries, codrv, "CoPilot", rallyName, rallyId);
+            }
+
+            _debug.Log($"  {entries.Count} inschrijvingen geladen voor {rallyName}.");
             return entries;
         }
         catch (Exception ex)
         {
-            _debug.Log($"Fout bij ophalen inschrijvingen voor {rallyName}: {ex.Message}");
-            throw new Exception($"Kan inschrijvingen niet ophalen voor {rallyName}: {ex.Message}", ex);
+            _debug.Log($"  Parseerfout voor {rallyName}: {ex.Message}");
+            return new List<DriverEntry>();
         }
+    }
+
+    private static void AddEntry(List<DriverEntry> list, JToken person, string type, string rallyName, int rallyId)
+    {
+        var firstName = person["firstname"]?.Value<string>() ?? string.Empty;
+        var lastName  = person["lastname"]?.Value<string>() ?? string.Empty;
+        var name = $"{firstName} {lastName}".Trim();
+        if (string.IsNullOrEmpty(name)) name = ExtractName(person["name"]);
+        if (string.IsNullOrEmpty(name)) return;
+
+        var number = person["id"]?.Value<int>().ToString() ?? string.Empty;
+        list.Add(new DriverEntry { Name = name, Number = number, Type = type, RallyName = rallyName, RallyId = rallyId });
     }
 
     public async Task<List<SearchResult>> SearchAsync(string query)
@@ -204,5 +287,33 @@ public class EwrcApiService
         {
             return null;
         }
+    }
+
+    // Parses a JSON response that may be either an array [...] or an object {...}
+    private static JArray ParseToArray(string json)
+    {
+        var trimmed = json.TrimStart();
+        if (trimmed.StartsWith('['))
+            return JArray.Parse(json);
+        var obj = JObject.Parse(json);
+        var arr = new JArray();
+        foreach (var val in obj.PropertyValues())
+            arr.Add(val);
+        return arr;
+    }
+
+    // Extracts a display name from a field that is either a plain string or a {"nl":"...","en":"..."} object
+    private static string ExtractName(JToken? token)
+    {
+        if (token == null) return string.Empty;
+        if (token.Type == JTokenType.Object)
+        {
+            var obj = (JObject)token;
+            return obj["nl"]?.Value<string>()
+                ?? obj["en"]?.Value<string>()
+                ?? obj.Properties().FirstOrDefault()?.Value.Value<string>()
+                ?? string.Empty;
+        }
+        return token.Value<string>() ?? string.Empty;
     }
 }

@@ -57,6 +57,9 @@ public class MemberListService
 
         for (int i = 1; i < rows.Count; i++)
         {
+            var firstCell = rows[i].Cell(1).Value.ToString().Trim();
+            if (!double.TryParse(firstCell, out _)) continue;  // skip non-member rows (extra info, totals, etc.)
+
             var cols = rows[i].CellsUsed().Select(c => c.Value.ToString()).ToArray();
             members.Add(MapColumns(headers, cols));
         }

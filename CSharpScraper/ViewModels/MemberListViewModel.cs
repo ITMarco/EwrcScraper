@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using EwrcScraper.Models;
 using EwrcScraper.Services;
 using Microsoft.Win32;
+using System.Collections.ObjectModel;
 
 namespace EwrcScraper.ViewModels;
 
@@ -21,6 +22,7 @@ public partial class MemberListViewModel : ObservableObject
     [ObservableProperty]
     private int _aantalLeden;
 
+    public ObservableCollection<RchMember> LedenGrid { get; } = new();
     public List<RchMember> Leden { get; private set; } = new();
 
     public MemberListViewModel(MemberListService service, DebugService debug, PreferencesService prefs)
@@ -63,16 +65,18 @@ public partial class MemberListViewModel : ObservableObject
         {
             Leden = _service.Load(LedenlijstPad);
             AantalLeden = Leden.Count;
-            StatusTekst = $"{AantalLeden} leden geladen.";
+            StatusTekst = $"{AantalLeden} leden geladen uit {Path.GetFileName(LedenlijstPad)}.";
 
-            var p = _prefs.Load();
-            p.LedenlijstPad = LedenlijstPad;
-            _prefs.Save(p);
+            LedenGrid.Clear();
+            foreach (var lid in Leden)
+                LedenGrid.Add(lid);
+
+            _prefs.SaveLedenlijstPad(LedenlijstPad);
         }
         catch (Exception ex)
         {
             StatusTekst = $"Fout bij laden: {ex.Message}";
-            _debug.Log($"Ledenlijst laadfoout: {ex.Message}");
+            _debug.Log($"Ledenlijst laadfout: {ex.Message}");
         }
     }
 }

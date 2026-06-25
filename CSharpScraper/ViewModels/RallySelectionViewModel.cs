@@ -10,6 +10,7 @@ public partial class RallySelectionViewModel : ObservableObject
 {
     private readonly EwrcApiService _api;
     private readonly DebugService _debug;
+    private readonly PreferencesService _prefs;
 
     public ObservableCollection<Country> Landen { get; } = new();
     public ObservableCollection<RallyEvent> RallyEvents { get; } = new();
@@ -17,6 +18,13 @@ public partial class RallySelectionViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(GefilterdeEvents))]
     private string _filter = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GefilterdeEvents))]
+    private string _sortering = "land";
+
+    [ObservableProperty]
+    private bool _landenUitgevouwen = true;
 
     [ObservableProperty]
     private bool _isBezig;
@@ -27,10 +35,21 @@ public partial class RallySelectionViewModel : ObservableObject
     [ObservableProperty]
     private int _geselecteerdJaar = DateTime.Now.Year;
 
-    public IEnumerable<RallyEvent> GefilterdeEvents =>
-        string.IsNullOrWhiteSpace(Filter)
-            ? RallyEvents
-            : RallyEvents.Where(r => r.Name.Contains(Filter, StringComparison.OrdinalIgnoreCase));
+    public IEnumerable<RallyEvent> GefilterdeEvents
+    {
+        get
+        {
+            var events = string.IsNullOrWhiteSpace(Filter)
+                ? RallyEvents.AsEnumerable()
+                : RallyEvents.Where(r => r.Name.Contains(Filter, StringComparison.OrdinalIgnoreCase));
+            return Sortering switch
+            {
+                "datumAsc"  => events.OrderBy(r => r.From),
+                "datumDesc" => events.OrderByDescending(r => r.From),
+                _           => events  // "land": keep API order (already per country)
+            };
+        }
+    }
 
     public IEnumerable<RallyEvent> GeselecteerdeEvents =>
         RallyEvents.Where(r => r.IsSelected);
@@ -38,10 +57,21 @@ public partial class RallySelectionViewModel : ObservableObject
     public List<int> GeselecteerdeLandIds =>
         Landen.Where(l => l.IsSelected).Select(l => l.Id).ToList();
 
-    public RallySelectionViewModel(EwrcApiService api, DebugService debug)
+    public string GeselecteerdeLandenSamenvatting
+    {
+        get
+        {
+            var sel = Landen.Where(l => l.IsSelected).ToList();
+            if (sel.Count == 0) return "Geen landen geselecteerd";
+            return string.Join("\n", sel.Select(l => $"{l.Flag} {l.Name}"));
+        }
+    }
+
+    public RallySelectionViewModel(EwrcApiService api, DebugService debug, PreferencesService prefs)
     {
         _api = api;
         _debug = debug;
+        _prefs = prefs;
     }
 
     public async Task LaadLandenAsync(List<int> geselecteerdeIds)
@@ -50,14 +80,26 @@ public partial class RallySelectionViewModel : ObservableObject
         StatusTekst = "Landen laden...";
         try
         {
+            _debug.Log($"Landen laden: opgeslagen selectie = [{string.Join(",", geselecteerdeIds)}]");
             var landen = await _api.GetCountriesAsync(GeselecteerdJaar);
             Landen.Clear();
             foreach (var land in landen.OrderBy(l => l.Name))
             {
                 land.IsSelected = geselecteerdeIds.Contains(land.Id);
-                land.PropertyChanged += (_, _) => OnPropertyChanged(nameof(GeselecteerdeLandIds));
+                land.PropertyChanged += (_, _) =>
+                {
+                    OnPropertyChanged(nameof(GeselecteerdeLandIds));
+                    OnPropertyChanged(nameof(GeselecteerdeLandenSamenvatting));
+                    _prefs.SaveCountryIds(GeselecteerdeLandIds);
+                };
                 Landen.Add(land);
             }
+            // Notify after initial selection is set (PropertyChanged is wired AFTER IsSelected is set above)
+            OnPropertyChanged(nameof(GeselecteerdeLandIds));
+            OnPropertyChanged(nameof(GeselecteerdeLandenSamenvatting));
+
+            var geselecteerd = Landen.Where(l => l.IsSelected).ToList();
+            _debug.Log($"Landen geladen: {Landen.Count} totaal, {geselecteerd.Count} geselecteerd: [{string.Join(", ", geselecteerd.Select(l => $"{l.Name}({l.Id})"))}]");
             StatusTekst = $"{landen.Count} landen geladen.";
         }
         catch (Exception ex)
@@ -111,6 +153,15 @@ public partial class RallySelectionViewModel : ObservableObject
 
     [RelayCommand]
     private void DeselecteerAlle() { foreach (var r in RallyEvents) r.IsSelected = false; }
+
+    [RelayCommand]
+    private void SorteerOpLand() => Sortering = "land";
+
+    [RelayCommand]
+    private void SorteerOpDatumAsc() => Sortering = "datumAsc";
+
+    [RelayCommand]
+    private void SorteerOpDatumDesc() => Sortering = "datumDesc";
 
     partial void OnFilterChanged(string value) => OnPropertyChanged(nameof(GefilterdeEvents));
 }

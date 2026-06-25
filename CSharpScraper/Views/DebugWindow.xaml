@@ -9,7 +9,9 @@
             <Button Content="🗑 Wissen" Style="{StaticResource SecondaryButton}" Padding="8,5"
                     Command="{Binding WissenCommand}" Margin="0,0,8,0"/>
             <Button Content="📋 Kopieer alles" Style="{StaticResource SecondaryButton}" Padding="8,5"
-                    Command="{Binding KopieerNaarKlembordCommand}"/>
+                    Command="{Binding KopieerNaarKlembordCommand}" Margin="0,0,8,0"/>
+            <Button Content="⚙ Voorkeuren bekijken" Style="{StaticResource SecondaryButton}" Padding="8,5"
+                    Command="{Binding ToonVoorkeurenCommand}"/>
         </StackPanel>
         <ListBox ItemsSource="{Binding LogRegels}" x:Name="LogList"
                  FontFamily="Consolas" FontSize="11"

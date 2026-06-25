@@ -65,6 +65,10 @@ public partial class MainViewModel : ObservableObject
         prefs.GeselecteerdeCountryIds = RallySelectie.GeselecteerdeLandIds;
         prefs.LedenlijstPad = Ledenlijst.LedenlijstPad;
         _prefsService.Save(prefs);
+
+        // Log what was saved so the user can verify in the debug window
+        var landen = string.Join(", ", prefs.GeselecteerdeCountryIds);
+        StatusBalk = $"Voorkeuren opgeslagen. Landen: [{landen}]";
     }
 
     [RelayCommand]

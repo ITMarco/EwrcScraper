@@ -7,4 +7,7 @@ public class DriverEntry
     public string Type { get; set; } = string.Empty;
     public string RallyName { get; set; } = string.Empty;
     public int RallyId { get; set; }
+    public string RallyDate { get; set; } = string.Empty;
+
+    public string TypeNl => Type == "Driver" ? "Rijder" : "Bijrijder";
 }
