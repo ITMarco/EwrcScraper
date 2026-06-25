@@ -1,0 +1,27 @@
+# Data files - never commit
+*.csv
+*.xls
+*.xlsx
+
+# Config with local paths
+window-settings.json
+
+# PowerShell Studio artifacts
+*.psf
+*.psbuild
+
+# .NET build output
+CSharpScraper/bin/
+CSharpScraper/obj/
+
+# User-specific VS/Rider settings
+*.user
+.vs/
+.idea/
+
+# Publish output
+CSharpScraper/publish/
+
+# OS
+Thumbs.db
+desktop.ini

@@ -1,0 +1,18 @@
+{
+  "EWRCBaseURL": "https://ewrc-results.com/",
+  "CountryGERnumber": "10",
+  "CountryBELnumber": "25",
+  "CountryNLnumber": "24",
+  "RallySeasonPrefixURL": "https://ewrc-results.com/season/YEAR/25-nederland?nat=24",
+  "RallyEventUrlBase": "https://ewrc-results.com/event/",
+  "RallySeasonSearchURLs": [
+    "https://ewrc-results.com/season/YEAR/25-nederland?nat=24",
+    "https://ewrc-results.com/season/YEAR/1363-nederland-historic?nat=24",
+    "https://ewrc-results.com/season/YEAR/86-nederland-others?nat=24"
+  ],
+  "WindowX": 1962,
+  "WindowY": 101,
+  "WindowWidth": 1538,
+  "WindowHeight": 1014,
+  "LedenlijstPath": "C:\\Users\\Gebruiker\\OneDrive\\Documenten\\Rally\\RCH\\Scraper"
+}
