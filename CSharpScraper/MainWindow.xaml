@@ -276,8 +276,9 @@
                               PreviewMouseRightButtonDown="LedenlijstGrid_PreviewMouseRightButtonDown">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Leden Nr." Binding="{Binding LedenNr}" Width="80"/>
-                            <DataGridTextColumn Header="Voornaam" Binding="{Binding Voornaam}" Width="120"/>
-                            <DataGridTextColumn Header="Achternaam" Binding="{Binding Achternaam}" Width="140"/>
+                            <DataGridTextColumn Header="Voornaam" Binding="{Binding Voornaam}" Width="110"/>
+                            <DataGridTextColumn Header="Tussenvoegsel" Binding="{Binding Tussenvoegsel}" Width="100"/>
+                            <DataGridTextColumn Header="Achternaam" Binding="{Binding Achternaam}" Width="130"/>
                             <DataGridTextColumn Header="EWRC Rijder" Binding="{Binding EwrcNrPilot}" Width="90"/>
                             <DataGridTextColumn Header="EWRC Bijrijder" Binding="{Binding EwrcNrCoPilot}" Width="100"/>
                             <DataGridTextColumn Header="E-mail" Binding="{Binding EmailAdres}" Width="*"/>

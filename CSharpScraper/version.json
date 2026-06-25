@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "1.3.1",
   "releaseDate": "2026-06-25",
-  "releaseNotes": "Eén-klik auto-update, automatische vergelijking bij stap 3, en migratie naar .NET 10 voor betere stabiliteit."
+  "releaseNotes": "Fix: Excel ledenlijst met lege velden (tussenvoegsel, EWRC nummers) wordt nu correct geladen."
 }

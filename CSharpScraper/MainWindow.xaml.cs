@@ -108,10 +108,11 @@ public partial class MainWindow : Window
                 {
                     0 => m.LedenNr,
                     1 => m.Voornaam,
-                    2 => m.Achternaam,
-                    3 => m.EwrcNrPilot,
-                    4 => m.EwrcNrCoPilot,
-                    5 => m.EmailAdres,
+                    2 => m.Tussenvoegsel,
+                    3 => m.Achternaam,
+                    4 => m.EwrcNrPilot,
+                    5 => m.EwrcNrCoPilot,
+                    6 => m.EmailAdres,
                     _ => string.Empty
                 });
                 Clipboard.SetText(string.Join(Environment.NewLine, values));
@@ -133,8 +134,8 @@ public partial class MainWindow : Window
             {
                 var text = string.Join("\t", new[]
                 {
-                    member.LedenNr, member.Voornaam, member.Achternaam,
-                    member.EwrcNrPilot, member.EwrcNrCoPilot, member.EmailAdres
+                    member.LedenNr, member.Voornaam, member.Tussenvoegsel,
+                    member.Achternaam, member.EwrcNrPilot, member.EwrcNrCoPilot, member.EmailAdres
                 });
                 Clipboard.SetText(text);
             };

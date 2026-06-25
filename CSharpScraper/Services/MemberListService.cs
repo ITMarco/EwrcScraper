@@ -60,7 +60,9 @@ public class MemberListService
             var firstCell = rows[i].Cell(1).Value.ToString().Trim();
             if (!double.TryParse(firstCell, out _)) continue;  // skip non-member rows (extra info, totals, etc.)
 
-            var cols = rows[i].CellsUsed().Select(c => c.Value.ToString()).ToArray();
+            var cols = Enumerable.Range(1, headers.Length)
+                .Select(col => rows[i].Cell(col).Value.ToString())
+                .ToArray();
             members.Add(MapColumns(headers, cols));
         }
 
@@ -79,6 +81,7 @@ public class MemberListService
             {
                 case "ledennr": member.LedenNr = v; break;
                 case "voornaam": member.Voornaam = v; break;
+                case "tussenvoegsel": member.Tussenvoegsel = v; break;
                 case "achternaam": member.Achternaam = v; break;
                 case "ewrcnrpilot": member.EwrcNrPilot = v; break;
                 case "ewrcnrcopilot": member.EwrcNrCoPilot = v; break;
