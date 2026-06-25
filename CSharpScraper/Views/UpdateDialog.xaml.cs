@@ -86,15 +86,28 @@ public partial class UpdateDialog : Window
         Directory.CreateDirectory(tempDir);
         var installerPath = Path.Combine(tempDir, $"EwrcScraper-v{_update.VersieNummer}-Setup.exe");
 
+        if (string.IsNullOrEmpty(_update.InstallerDownloadUrl))
+            throw new InvalidOperationException("Geen installer-URL beschikbaar in de release. Gebruik 'Zelf downloaden'.");
+
         await DownloadToFileAsync(_update.InstallerDownloadUrl, installerPath);
 
+        if (!File.Exists(installerPath) || new FileInfo(installerPath).Length < 1024)
+            throw new InvalidOperationException("Gedownload bestand is leeg of ontbreekt.");
+
+        // Remove the "downloaded from internet" mark so SmartScreen doesn't silently block it
+        try { File.Delete(installerPath + ":Zone.Identifier"); } catch { }
+
         VoortgangTekst.Text = "Installatieprogramma starten...";
-        Process.Start(new ProcessStartInfo
+        var proc = Process.Start(new ProcessStartInfo
         {
             FileName = installerPath,
             UseShellExecute = true,   // required so the installer's admin manifest triggers UAC
         });
 
+        if (proc == null)
+            throw new InvalidOperationException("Kon het installatieprogramma niet starten. Mogelijk is UAC uitgeschakeld of het bestand geblokkeerd.");
+
+        // Only shut down once the installer process is confirmed running.
         Application.Current.Shutdown();
     }
 

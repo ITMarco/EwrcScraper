@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EwrcScraper.Models;
 using EwrcScraper.Services;
+using System.Diagnostics;
 
 namespace EwrcScraper.ViewModels;
 
@@ -29,6 +30,8 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isBezig;
 
+    private readonly DebugService _debug;
+
     public MainViewModel(
         RallySelectionViewModel rallySelectie,
         MemberListViewModel ledenlijst,
@@ -39,6 +42,7 @@ public partial class MainViewModel : ObservableObject
         UpdateService updateService,
         DebugService debug)
     {
+        _debug = debug;
         RallySelectie = rallySelectie;
         Ledenlijst = ledenlijst;
         Vergelijking = vergelijking;
@@ -68,7 +72,21 @@ public partial class MainViewModel : ObservableObject
             await RallySelectie.UpdateRallyLijstCommand.ExecuteAsync(null);
 
         if (prefs.ControleerUpdates)
-            (BeschikbareUpdate, _) = await UpdateService.CheckForUpdateAsync();
+        {
+            var exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "(onbekend)";
+            var isInstalled = UpdateService.IsInstalledVersion();
+            _debug.Log($"[Update] Versie: {UpdateService.HuidigeVersie()} | Exe: {exePath} | Geïnstalleerd: {isInstalled}");
+
+            var (update, geslaagd) = await UpdateService.CheckForUpdateAsync();
+            BeschikbareUpdate = update;
+
+            if (!geslaagd)
+                _debug.Log("[Update] Controle mislukt (netwerk of API-fout).");
+            else if (update == null)
+                _debug.Log("[Update] Al up-to-date.");
+            else
+                _debug.Log($"[Update] Nieuwe versie: {update.VersieNummer} | InstallerUrl: {update.InstallerDownloadUrl}");
+        }
     }
 
     public void VoorkeurenOpslaan(double x, double y, double w, double h)
