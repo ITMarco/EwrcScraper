@@ -18,6 +18,9 @@ public partial class PreferencesViewModel : ObservableObject
     private string _apiBaseUrl = string.Empty;
 
     [ObservableProperty]
+    private string _ledenlijstPad = string.Empty;
+
+    [ObservableProperty]
     private string _updateStatusTekst = string.Empty;
 
     [ObservableProperty]
@@ -32,6 +35,7 @@ public partial class PreferencesViewModel : ObservableObject
         ControleerUpdates = prefs.ControleerUpdates;
         DebugVensterBijOpstarten = prefs.DebugVensterZichtbaar;
         ApiBaseUrl = prefs.ApiBaseUrl;
+        LedenlijstPad = prefs.LedenlijstPad;
         HuidigeVersie = updateService.HuidigeVersie();
     }
 
@@ -40,5 +44,6 @@ public partial class PreferencesViewModel : ObservableObject
         prefs.ControleerUpdates = ControleerUpdates;
         prefs.DebugVensterZichtbaar = DebugVensterBijOpstarten;
         prefs.ApiBaseUrl = ApiBaseUrl;
+        prefs.LedenlijstPad = LedenlijstPad;
     }
 }

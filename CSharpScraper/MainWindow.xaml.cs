@@ -66,6 +66,12 @@ public partial class MainWindow : Window
 
     private void BtnDebug_Click(object sender, RoutedEventArgs e) => OpenDebugWindow();
 
+    private void BtnEwrcLogo_Click(object sender, RoutedEventArgs e)
+        => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://www.ewrc-results.com") { UseShellExecute = true });
+
+    private void BtnRchLogo_Click(object sender, RoutedEventArgs e)
+        => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://www.rallyclubholland.nl") { UseShellExecute = true });
+
     private void BtnVoorkeuren_Click(object sender, RoutedEventArgs e)
     {
         var huidigePrefs = _vm.VoorkeurenService.Load();

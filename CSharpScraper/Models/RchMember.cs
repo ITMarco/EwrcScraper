@@ -10,6 +10,8 @@ public class RchMember
     public string EwrcNrCoPilot { get; set; } = string.Empty;
     public string EmailAdres { get; set; } = string.Empty;
 
+    public int LedenNrSort => int.TryParse(LedenNr, out var n) ? n : int.MaxValue;
+
     public string VolledigeNaam => string.IsNullOrEmpty(Tussenvoegsel)
         ? $"{Voornaam} {Achternaam}".Trim()
         : $"{Voornaam} {Tussenvoegsel} {Achternaam}".Trim();

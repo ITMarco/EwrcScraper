@@ -23,6 +23,9 @@ CSharpScraper/obj/
 CSharpScraper/publish/
 publish/
 
+# Installer build output (keep the .iss/.ps1 scripts, ignore compiled setup)
+Installer/Output/
+
 # OS
 Thumbs.db
 desktop.ini

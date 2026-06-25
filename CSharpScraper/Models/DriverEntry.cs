@@ -9,5 +9,6 @@ public class DriverEntry
     public int RallyId { get; set; }
     public string RallyDate { get; set; } = string.Empty;
 
+    public int NumberSort => int.TryParse(Number, out var n) ? n : int.MaxValue;
     public string TypeNl => Type == "Driver" ? "Rijder" : "Bijrijder";
 }

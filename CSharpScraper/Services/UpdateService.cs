@@ -1,5 +1,6 @@
 using EwrcScraper.Models;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Reflection;
 
@@ -19,6 +20,22 @@ public class UpdateService
     {
         var v = Assembly.GetExecutingAssembly().GetName().Version;
         return v == null ? "0.0.0" : $"{v.Major}.{v.Minor}.{v.Build}";
+    }
+
+    // True when the running exe lives under Program Files — i.e. it was placed there
+    // by the installer. False for the portable (framework-dependent) build run from elsewhere.
+    public static bool IsInstalledVersion()
+    {
+        var exePath = Process.GetCurrentProcess().MainModule?.FileName ?? string.Empty;
+        if (string.IsNullOrEmpty(exePath)) return false;
+
+        var roots = new[]
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+        };
+        return roots.Any(r => !string.IsNullOrEmpty(r)
+            && exePath.StartsWith(r, StringComparison.OrdinalIgnoreCase));
     }
 
     // (update, true)  — newer version found
@@ -44,14 +61,20 @@ public class UpdateService
                 Version.TryParse(HuidigeVersie(), out var vHuidige) &&
                 vNieuw > vHuidige)
             {
-                // Find the framework-dependent zip in the release assets
-                // (name ends with -win-x64.zip but NOT -standalone)
+                // Find the release assets:
+                //   - framework-dependent zip  → name ends with -win-x64.zip (not -standalone)
+                //   - installer                → name ends with -Setup.exe
                 var assets = release["assets"] as JArray;
                 var zipAsset = assets?.FirstOrDefault(a =>
                 {
                     var name = a["name"]?.Value<string>() ?? string.Empty;
                     return name.EndsWith("-win-x64.zip", StringComparison.OrdinalIgnoreCase)
                         && !name.Contains("-standalone", StringComparison.OrdinalIgnoreCase);
+                });
+                var installerAsset = assets?.FirstOrDefault(a =>
+                {
+                    var name = a["name"]?.Value<string>() ?? string.Empty;
+                    return name.EndsWith("-Setup.exe", StringComparison.OrdinalIgnoreCase);
                 });
 
                 return (new UpdateInfo
@@ -60,6 +83,7 @@ public class UpdateService
                     ReleaseNotes = release["body"]?.Value<string>() ?? string.Empty,
                     DownloadUrl = release["html_url"]?.Value<string>() ?? string.Empty,
                     ZipDownloadUrl = zipAsset?["browser_download_url"]?.Value<string>() ?? string.Empty,
+                    InstallerDownloadUrl = installerAsset?["browser_download_url"]?.Value<string>() ?? string.Empty,
                     PublicatieDatum = release["published_at"]?.Value<string>() ?? string.Empty,
                 }, true);
             }

@@ -1,5 +1,6 @@
 using EwrcScraper.Services;
 using EwrcScraper.ViewModels;
+using Microsoft.Win32;
 using System.Windows;
 
 namespace EwrcScraper.Views;
@@ -15,6 +16,21 @@ public partial class PreferencesWindow : Window
         _vm = vm;
         _prefs = prefs;
         DataContext = vm;
+    }
+
+    private void Bladeren_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Selecteer ledenlijst bestand",
+            Filter = "Excel / CSV bestanden|*.xlsx;*.xls;*.csv|Alle bestanden|*.*",
+            CheckFileExists = true,
+        };
+        if (!string.IsNullOrEmpty(_vm.LedenlijstPad) && File.Exists(_vm.LedenlijstPad))
+            dialog.InitialDirectory = Path.GetDirectoryName(_vm.LedenlijstPad);
+
+        if (dialog.ShowDialog(this) == true)
+            _vm.LedenlijstPad = dialog.FileName;
     }
 
     private async void CheckNu_Click(object sender, RoutedEventArgs e)

@@ -6,12 +6,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Resources\ewrc-rch.ico</ApplicationIcon>
     <AssemblyTitle>EWRC Scraper</AssemblyTitle>
     <Product>EWRC Scraper</Product>
     <Company>RCH</Company>
-    <Version>1.3.1</Version>
-    <AssemblyVersion>1.3.1.0</AssemblyVersion>
-    <FileVersion>1.3.1.0</FileVersion>
+    <Version>1.4.0</Version>
+    <AssemblyVersion>1.4.0.0</AssemblyVersion>
+    <FileVersion>1.4.0.0</FileVersion>
 
   </PropertyGroup>
 
@@ -26,6 +27,12 @@
     <None Update="version.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\ewrc-rch.ico"/>
+    <Resource Include="Resources\Images\ewrc-logo.png"/>
+    <Resource Include="Resources\Images\rch-logo.png"/>
   </ItemGroup>
 
 </Project>

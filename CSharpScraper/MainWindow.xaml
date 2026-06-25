@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="EWRC Scraper — RCH" Height="720" Width="1050"
-        MinHeight="600" MinWidth="850"
+        Title="EWRC Scraper — RCH" Height="720" Width="1180"
+        MinHeight="600" MinWidth="980"
+        Icon="pack://application:,,,/Resources/ewrc-rch.ico"
         Background="{StaticResource LightBgBrush}">
 
     <Window.Resources>
@@ -65,6 +66,53 @@
                 Padding="12,6">
             <TextBlock Text="{Binding StatusBalk}" Style="{StaticResource StatusLabel}"
                        TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Rechterzijbalk: logo's -->
+        <Border DockPanel.Dock="Right" Width="140"
+                Background="White"
+                BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1,0,0,0">
+            <StackPanel Margin="10,16,10,16" VerticalAlignment="Top">
+
+                <!-- eWRC logo -->
+                <Button x:Name="BtnEwrcLogo" Click="BtnEwrcLogo_Click"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        ToolTip="Bezoek ewrc-results.com">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="Transparent">
+                                <ContentPresenter/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Image Source="pack://application:,,,/Resources/Images/ewrc-logo.png"
+                           Height="52" Stretch="Uniform" Margin="0,0,0,6"/>
+                </Button>
+                <TextBlock TextWrapping="Wrap" FontSize="10" Foreground="#556"
+                           TextAlignment="Center" Margin="0,0,0,14"
+                           Text="Steun eWRC: bezoek hun site en sta advertenties toe, of neem een betaald abonnement."/>
+
+                <Separator Background="{StaticResource AppBorderBrush}" Margin="0,0,0,14"/>
+
+                <!-- RCH logo -->
+                <Button x:Name="BtnRchLogo" Click="BtnRchLogo_Click"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        ToolTip="Bezoek rallyclubholland.nl">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="Transparent">
+                                <ContentPresenter/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Image Source="pack://application:,,,/Resources/Images/rch-logo.png"
+                           Height="80" Stretch="Uniform" Margin="0,0,0,6"/>
+                </Button>
+                <TextBlock TextWrapping="Wrap" FontSize="10" Foreground="#556"
+                           TextAlignment="Center"
+                           Text="Word lid van Rally Club Holland!"/>
+
+            </StackPanel>
         </Border>
 
         <!-- Tabs -->
@@ -237,7 +285,7 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Naam"      Binding="{Binding Name}"      Width="*"/>
                                 <DataGridTextColumn Header="Rol"       Binding="{Binding TypeNl}"    Width="80"/>
-                                <DataGridTextColumn Header="EWRC Nr."  Binding="{Binding Number}"    Width="80"/>
+                                <DataGridTextColumn Header="EWRC Nr."  Binding="{Binding Number}"    Width="80" SortMemberPath="NumberSort"/>
                                 <DataGridTextColumn Header="Rally"     Binding="{Binding RallyName}" Width="200"/>
                                 <DataGridTextColumn Header="Datum"     Binding="{Binding RallyDate}" Width="90"/>
                             </DataGrid.Columns>
@@ -275,7 +323,7 @@
                               BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
                               PreviewMouseRightButtonDown="LedenlijstGrid_PreviewMouseRightButtonDown">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Leden Nr." Binding="{Binding LedenNr}" Width="80"/>
+                            <DataGridTextColumn Header="Leden Nr." Binding="{Binding LedenNr}" Width="80" SortMemberPath="LedenNrSort"/>
                             <DataGridTextColumn Header="Voornaam" Binding="{Binding Voornaam}" Width="110"/>
                             <DataGridTextColumn Header="Tussenvoegsel" Binding="{Binding Tussenvoegsel}" Width="100"/>
                             <DataGridTextColumn Header="Achternaam" Binding="{Binding Achternaam}" Width="130"/>
@@ -329,7 +377,7 @@
                                   BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
                                   PreviewMouseRightButtonDown="VergelijkGrid_PreviewMouseRightButtonDown">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Leden Nr." Binding="{Binding LedenNr}" Width="80"/>
+                                <DataGridTextColumn Header="Leden Nr." Binding="{Binding LedenNr}" Width="80" SortMemberPath="LedenNrSort"/>
                                 <DataGridTextColumn Header="Naam" Binding="{Binding VolledigeNaam}" Width="160"/>
                                 <DataGridTextColumn Header="E-mail" Binding="{Binding EmailAdres}" Width="200"/>
                                 <DataGridTextColumn Header="EWRC Nr." Binding="{Binding EwrcNr}" Width="80"/>
@@ -350,7 +398,7 @@
             </TabItem>
 
             <!-- TAB 4: Rijder zoeken -->
-            <TabItem Style="{StaticResource TabHeaderStyle}" Header="EWRC Zoeken">
+            <TabItem Style="{StaticResource TabHeaderStyle}" Header="EWRC Rijders/Navigator opzoeken">
                 <Grid Margin="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="300"/>
@@ -358,89 +406,193 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Links: zoekresultaten -->
-                    <DockPanel Grid.Column="0">
-                        <Label Content="Zoeken" Style="{StaticResource HeaderLabel}" DockPanel.Dock="Top"/>
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBox Width="190" Padding="6,4" Margin="0,0,6,0"
-                                     Text="{Binding RijderZoeken.Zoekterm, UpdateSourceTrigger=PropertyChanged}"
-                                     BorderBrush="{StaticResource AppBorderBrush}">
-                                <TextBox.InputBindings>
-                                    <KeyBinding Key="Return" Command="{Binding RijderZoeken.ZoekCommand}"/>
-                                </TextBox.InputBindings>
-                            </TextBox>
-                            <Button Content="🔍" Style="{StaticResource PrimaryButton}" Padding="10,5"
-                                    Command="{Binding RijderZoeken.ZoekCommand}"/>
-                        </StackPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="{Binding RijderZoeken.StatusTekst}"
-                                   Style="{StaticResource StatusLabel}" Margin="0,0,0,6"/>
-                        <ListBox ItemsSource="{Binding RijderZoeken.Zoekresultaten}"
-                                 SelectedItem="{Binding RijderZoeken.GeselecteerdeRijder}"
-                                 BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Margin="4,2">
-                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"/>
-                                        <TextBlock FontSize="10" Foreground="#778">
-                                            <Run Text="{Binding Type}"/>
-                                            <Run Text=" · "/>
-                                            <Run Text="{Binding Country}"/>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </DockPanel>
+                    <!-- Links: zoekresultaten + vergelijkingslijst -->
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="160"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Zoekresultaten -->
+                        <DockPanel Grid.Row="0">
+                            <Label Content="Zoeken" Style="{StaticResource HeaderLabel}" DockPanel.Dock="Top"/>
+                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBox Width="190" Padding="6,4" Margin="0,0,6,0"
+                                         Text="{Binding RijderZoeken.Zoekterm, UpdateSourceTrigger=PropertyChanged}"
+                                         BorderBrush="{StaticResource AppBorderBrush}">
+                                    <TextBox.InputBindings>
+                                        <KeyBinding Key="Return" Command="{Binding RijderZoeken.ZoekCommand}"/>
+                                    </TextBox.InputBindings>
+                                </TextBox>
+                                <Button Content="🔍" Style="{StaticResource PrimaryButton}" Padding="10,5"
+                                        Command="{Binding RijderZoeken.ZoekCommand}"/>
+                            </StackPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="{Binding RijderZoeken.StatusTekst}"
+                                       Style="{StaticResource StatusLabel}" Margin="0,0,0,6"/>
+                            <ListBox ItemsSource="{Binding RijderZoeken.Zoekresultaten}"
+                                     SelectedItem="{Binding RijderZoeken.GeselecteerdeRijder}"
+                                     BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="4,2">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"/>
+                                            <TextBlock FontSize="10" Foreground="#778">
+                                                <Run Text="{Binding Type}"/>
+                                                <Run Text=" · "/>
+                                                <Run Text="{Binding Country}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+
+                        <!-- Separator -->
+                        <Separator Grid.Row="1" Margin="0,6"/>
+
+                        <!-- Vergelijkingslijst -->
+                        <DockPanel Grid.Row="2">
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                                <Label Content="Geselecteerde rijders" Style="{StaticResource HeaderLabel}"
+                                       Padding="0" VerticalAlignment="Center"/>
+                                <Button Content="Wis" DockPanel.Dock="Right" Padding="8,2"
+                                        Command="{Binding RijderZoeken.WisVergelijkingCommand}"
+                                        VerticalAlignment="Center" Margin="4,0,0,0"/>
+                            </DockPanel>
+                            <Button DockPanel.Dock="Bottom" Margin="0,4,0,0" Padding="8,4"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding RijderZoeken.StartVergelijkingCommand}">
+                                <TextBlock>
+                                    <Run Text="⚖ Vergelijk ("/>
+                                    <Run Text="{Binding RijderZoeken.VergelijkAantal, Mode=OneWay}"/>
+                                    <Run Text=")"/>
+                                </TextBlock>
+                            </Button>
+                            <TextBlock DockPanel.Dock="Top" FontSize="10" Foreground="#889" Margin="0,0,0,4"
+                                       Text="Klik ➕ in het profiel om toe te voegen. Klik naam om opnieuw te tonen."/>
+                            <ListBox ItemsSource="{Binding RijderZoeken.VergelijkLijst}"
+                                     BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel>
+                                            <Button Content="✕" DockPanel.Dock="Right" Padding="4,1"
+                                                    FontSize="10" VerticalAlignment="Center" Margin="4,0,0,0"
+                                                    Command="{Binding DataContext.RijderZoeken.VerwijderUitVergelijkingCommand,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <TextBlock Text="{Binding Name}" FontSize="12" VerticalAlignment="Center"
+                                                       Cursor="Hand">
+                                                <TextBlock.InputBindings>
+                                                    <MouseBinding MouseAction="LeftClick"
+                                                                  Command="{Binding DataContext.RijderZoeken.ToonVergelijkRijderCommand,
+                                                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                  CommandParameter="{Binding}"/>
+                                                </TextBlock.InputBindings>
+                                            </TextBlock>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                    </Grid>
 
                     <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
                                   Background="{StaticResource AppBorderBrush}"/>
 
-                    <!-- Rechts: rijderprofiel -->
-                    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="8,0,0,0">
-                            <Label Content="Rijdersprofiel" Style="{StaticResource HeaderLabel}"/>
+                    <!-- Rechts: profiel (enkel) of vergelijkingstabel -->
+                    <Grid Grid.Column="2">
 
-                            <!-- Foto + basisinfo -->
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <Image Source="{Binding RijderZoeken.RijderFoto}" Width="100" Height="130"
-                                       Stretch="UniformToFill" Margin="0,0,12,0">
-                                    <Image.Clip>
-                                        <RectangleGeometry RadiusX="6" RadiusY="6"
-                                                           Rect="0,0,100,130"/>
-                                    </Image.Clip>
-                                </Image>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding RijderZoeken.RijderNaam}"
-                                               FontSize="18" FontWeight="Bold"
-                                               Foreground="{StaticResource PrimaryBrush}"/>
-                                    <TextBlock Text="{Binding RijderZoeken.RijderType}"
-                                               FontSize="12" Foreground="#556" Margin="0,2,0,0"/>
-                                    <TextBlock Margin="0,6,0,0" FontSize="12">
-                                        <Run Foreground="#778">Land: </Run>
-                                        <Run Text="{Binding RijderZoeken.RijderLand}" FontWeight="SemiBold"/>
-                                    </TextBlock>
-                                    <TextBlock FontSize="12">
-                                        <Run Foreground="#778">Geboren: </Run>
-                                        <Run Text="{Binding RijderZoeken.RijderGeboren}" FontWeight="SemiBold"/>
-                                    </TextBlock>
+                        <!-- Rijdersprofiel (enkel) -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      Visibility="{Binding RijderZoeken.ToonVergelijking, Converter={StaticResource InvBoolToVis}}">
+                            <StackPanel Margin="8,0,0,0">
+                                <Label Content="Rijdersprofiel" Style="{StaticResource HeaderLabel}"/>
+
+                                <!-- Foto + basisinfo -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <Image Source="{Binding RijderZoeken.RijderFoto}" Width="100" Height="130"
+                                           Stretch="UniformToFill" Margin="0,0,12,0">
+                                        <Image.Clip>
+                                            <RectangleGeometry RadiusX="6" RadiusY="6" Rect="0,0,100,130"/>
+                                        </Image.Clip>
+                                    </Image>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding RijderZoeken.RijderNaam}"
+                                                   FontSize="18" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryBrush}"/>
+                                        <TextBlock Text="{Binding RijderZoeken.RijderType}"
+                                                   FontSize="12" Foreground="#556" Margin="0,2,0,0"/>
+                                        <TextBlock Margin="0,6,0,0" FontSize="12">
+                                            <Run Foreground="#778">EWRC ID: </Run>
+                                            <Run Text="{Binding RijderZoeken.RijderEwrcId}" FontWeight="SemiBold"
+                                                 FontFamily="Consolas"/>
+                                        </TextBlock>
+                                        <TextBlock FontSize="12">
+                                            <Run Foreground="#778">Land: </Run>
+                                            <Run Text="{Binding RijderZoeken.RijderLand}" FontWeight="SemiBold"/>
+                                        </TextBlock>
+                                        <TextBlock FontSize="12">
+                                            <Run Foreground="#778">Geboren: </Run>
+                                            <Run Text="{Binding RijderZoeken.RijderGeboren}" FontWeight="SemiBold"/>
+                                        </TextBlock>
+                                        <TextBlock FontSize="12" Margin="0,4,0,0"
+                                                   Visibility="{Binding RijderZoeken.RijderProfielUrl,
+                                                     Converter={StaticResource CountToVis}}">
+                                            <Hyperlink Command="{Binding RijderZoeken.OpenProfielUrlCommand}"
+                                                       Foreground="{StaticResource PrimaryBrush}">
+                                                Bekijk profiel op eWRC ↗
+                                            </Hyperlink>
+                                        </TextBlock>
+                                        <Button Content="➕ Toevoegen aan lijst" Margin="0,8,0,0" Padding="8,4"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding RijderZoeken.VoegToeAanVergelijkingCommand}"/>
+                                    </StackPanel>
                                 </StackPanel>
-                            </StackPanel>
 
-                            <!-- Stats tabel -->
-                            <Label Content="Statistieken per categorie" Style="{StaticResource HeaderLabel}"/>
-                            <DataGrid ItemsSource="{Binding RijderZoeken.RijderStats}"
+                                <!-- Stats tabel -->
+                                <Label Content="Statistieken per categorie" Style="{StaticResource HeaderLabel}"/>
+                                <DataGrid ItemsSource="{Binding RijderZoeken.RijderStats}"
+                                          BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
+                                          MaxHeight="300">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Categorie"  Binding="{Binding Category}"      Width="*"/>
+                                        <DataGridTextColumn Header="Starts"     Binding="{Binding Starts}"        Width="55"/>
+                                        <DataGridTextColumn Header="Winst"      Binding="{Binding Wins}"          Width="50"/>
+                                        <DataGridTextColumn Header="Kl.Winst"   Binding="{Binding KlasseWinst}"   Width="65"/>
+                                        <DataGridTextColumn Header="Uitval"     Binding="{Binding UitvalDisplay}" Width="80"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Vergelijkingstabel (meerdere rijders) -->
+                        <DockPanel Margin="8,0,0,0"
+                                   Visibility="{Binding RijderZoeken.ToonVergelijking, Converter={StaticResource BoolToVis}}">
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Label Content="Vergelijking" Style="{StaticResource HeaderLabel}"/>
+                                <Button Content="✕ Sluiten" DockPanel.Dock="Right" Padding="8,3"
+                                        Command="{Binding RijderZoeken.SluitVergelijkingCommand}"
+                                        VerticalAlignment="Center"/>
+                            </DockPanel>
+                            <DataGrid ItemsSource="{Binding RijderZoeken.VergelijkRegels}"
                                       BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
-                                      MaxHeight="300">
+                                      CanUserAddRows="False" CanUserDeleteRows="False"
+                                      IsReadOnly="True" AutoGenerateColumns="False">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Categorie" Binding="{Binding Category}" Width="*"/>
-                                    <DataGridTextColumn Header="Starts" Binding="{Binding Starts}" Width="60"/>
-                                    <DataGridTextColumn Header="Winst" Binding="{Binding Wins}" Width="60"/>
-                                    <DataGridTextColumn Header="Podiums" Binding="{Binding Podiums}" Width="70"/>
-                                    <DataGridTextColumn Header="Finish" Binding="{Binding Finishes}" Width="60"/>
+                                    <DataGridTextColumn Header="EWRC ID"  Binding="{Binding EwrcId}"     Width="70"/>
+                                    <DataGridTextColumn Header="Naam"     Binding="{Binding Naam}"       Width="*"/>
+                                    <DataGridTextColumn Header="Type"     Binding="{Binding Type}"       Width="70"/>
+                                    <DataGridTextColumn Header="Land"     Binding="{Binding Land}"       Width="90"/>
+                                    <DataGridTextColumn Header="Geboren"  Binding="{Binding Geboren}"    Width="80"/>
+                                    <DataGridTextColumn Header="Starts"   Binding="{Binding Starts}"     Width="55"/>
+                                    <DataGridTextColumn Header="Uitval"   Binding="{Binding Uitval}"     Width="75"/>
+                                    <DataGridTextColumn Header="Winst"    Binding="{Binding Winst}"      Width="50"/>
+                                    <DataGridTextColumn Header="Kl.Winst" Binding="{Binding KlasseWinst}" Width="65"/>
                                 </DataGrid.Columns>
                             </DataGrid>
-                        </StackPanel>
-                    </ScrollViewer>
+                        </DockPanel>
+                    </Grid>
                 </Grid>
             </TabItem>
         </TabControl>

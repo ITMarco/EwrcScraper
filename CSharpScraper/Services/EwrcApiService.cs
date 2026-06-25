@@ -22,6 +22,7 @@ public class EwrcApiService
     {
         _debug.Log($"Landen ophalen voor jaar {year}...");
         var url = $"{_apiBase}/calendar/{year}/natall";
+        _debug.Log($"GET {url}");
         try
         {
             var json = await _http.GetStringAsync(url);
@@ -205,20 +206,35 @@ public class EwrcApiService
     {
         _debug.Log($"Zoeken naar: {query}");
         var url = $"{_apiBase}/search?query={Uri.EscapeDataString(query)}&limit=10";
+        _debug.Log($"GET {url}");
         try
         {
             var json = await _http.GetStringAsync(url);
-            var array = JArray.Parse(json);
+            _debug.Log($"  Antwoord (eerste 300): {json[..Math.Min(300, json.Length)]}");
+            var array = ExtractSearchArray(json);
             var results = new List<SearchResult>();
             foreach (var item in array)
             {
+                if (item.Type != JTokenType.Object) continue;
+
+                // Persons use firstname/lastname; events and others may use a plain "name".
+                var first = item["firstname"]?.Value<string>() ?? string.Empty;
+                var last = item["lastname"]?.Value<string>() ?? string.Empty;
+                var naam = $"{first} {last}".Trim();
+                if (string.IsNullOrEmpty(naam)) naam = ExtractName(item["name"]);
+
+                var vlag = item["flag"]?.Value<string>()
+                    ?? item["country"]?.Value<string>()
+                    ?? item["nationality"]?.Value<string>()
+                    ?? string.Empty;
+
                 results.Add(new SearchResult
                 {
-                    Id = item["id"]?.Value<int>().ToString() ?? string.Empty,
-                    Name = item["name"]?.Value<string>() ?? string.Empty,
-                    Type = item["type"]?.Value<string>() ?? string.Empty,
-                    Country = item["country"]?.Value<string>() ?? string.Empty,
-                    Extra = item["extra"]?.Value<string>() ?? string.Empty,
+                    Id = item["id"]?.ToString() ?? string.Empty,
+                    Name = naam,
+                    Type = item["type"]?.Value<string>() ?? item["__group"]?.Value<string>() ?? string.Empty,
+                    Country = vlag.ToUpperInvariant(),
+                    Extra = item["slug"]?.Value<string>() ?? item["extra"]?.Value<string>() ?? string.Empty,
                 });
             }
             _debug.Log($"{results.Count} zoekresultaten.");
@@ -231,11 +247,15 @@ public class EwrcApiService
         }
     }
 
-    public async Task<DriverProfile> GetDriverProfileAsync(string driverId)
+    public async Task<DriverProfile> GetDriverProfileAsync(string driverId, string type = "driver")
     {
-        _debug.Log($"Rijdersprofiel ophalen: id={driverId}");
-        var profileUrl = $"{_apiBase}/driver/{driverId}";
-        var statsUrl = $"{_apiBase}/driver/{driverId}/categories?all=true";
+        // Drivers and codrivers share numeric IDs but live in separate API namespaces.
+        var endpoint = type.Equals("codriver", StringComparison.OrdinalIgnoreCase) ? "codriver" : "driver";
+        _debug.Log($"Rijdersprofiel ophalen: id={driverId}, type={endpoint}");
+        var profileUrl = $"{_apiBase}/{endpoint}/{driverId}";
+        var statsUrl = $"{_apiBase}/{endpoint}/{driverId}/categories?all=true";
+        _debug.Log($"GET {profileUrl}");
+        _debug.Log($"GET {statsUrl}");
 
         try
         {
@@ -244,28 +264,100 @@ public class EwrcApiService
             await Task.WhenAll(profileTask, statsTask);
 
             var profileJson = JObject.Parse(await profileTask);
-            var statsArray = JArray.Parse(await statsTask);
+            var statsToken = JToken.Parse(await statsTask);
+
+            // API returns firstname+lastname, not a combined "name"
+            var firstName = profileJson["firstname"]?.Value<string>() ?? string.Empty;
+            var lastName  = profileJson["lastname"]?.Value<string>() ?? string.Empty;
+            var fullName  = $"{firstName} {lastName}".Trim();
+            if (string.IsNullOrEmpty(fullName))
+                fullName = profileJson["name"]?.Value<string>() ?? string.Empty;
+
+            // Country is under nation.name (multilingual) with a flag code in nation.flag
+            var nation = profileJson["nation"] as JObject;
+            var countryName = string.Empty;
+            if (nation?["name"] is JObject nameObj)
+                countryName = nameObj["nl"]?.Value<string>()
+                    ?? nameObj["en"]?.Value<string>()
+                    ?? string.Empty;
+            if (string.IsNullOrEmpty(countryName))
+                countryName = (nation?["flag"]?.Value<string>() ?? string.Empty).ToUpperInvariant();
+
+            var slug = profileJson["slug"]?.Value<string>() ?? string.Empty;
+            var rawPhoto = profileJson["photo"]?.Value<string>() ?? string.Empty;
+            var photoUrl = string.IsNullOrEmpty(rawPhoto)
+                ? string.Empty
+                : $"https://www.ewrc-results.com/photos/{rawPhoto}";
+            var pageSegment = endpoint == "codriver" ? "coprofile" : "profile";
+            var profilePageUrl = string.IsNullOrEmpty(slug)
+                ? string.Empty
+                : $"https://www.ewrc-results.com/{pageSegment}/{driverId}-{slug}/";
 
             var profile = new DriverProfile
             {
                 Id = driverId,
-                Name = profileJson["name"]?.Value<string>() ?? string.Empty,
+                Name = fullName,
                 Type = profileJson["type"]?.Value<string>() ?? string.Empty,
-                Country = profileJson["country"]?.Value<string>() ?? string.Empty,
+                Country = countryName,
                 Born = profileJson["born"]?.Value<string>() ?? string.Empty,
-                PhotoUrl = profileJson["photo"]?.Value<string>() ?? string.Empty,
+                PhotoUrl = photoUrl,
+                ProfileUrl = profilePageUrl,
             };
 
-            foreach (var stat in statsArray)
+            // The categories endpoint may return a flat array or
+            // {sections:[],categories:[{key,raceType,stats:[{key,value}]}]}
+            JArray categoriesArray;
+            if (statsToken is JArray directArr)
+                categoriesArray = directArr;
+            else if (statsToken is JObject statsObj && statsObj["categories"] is JArray cats)
+                categoriesArray = cats;
+            else
+                categoriesArray = new JArray();
+
+            foreach (var cat in categoriesArray)
             {
-                profile.Stats.Add(new DriverCategoryStats
+                var catStats = cat["stats"] as JArray;
+                int GetStat(string key) => catStats?
+                    .FirstOrDefault(s => s["key"]?.Value<string>() == key)?
+                    ["value"]?.Value<int>() ?? 0;
+                double GetPct(string key) => catStats?
+                    .FirstOrDefault(s => s["key"]?.Value<string>() == key)?
+                    ["percentage"]?.Value<double>() ?? 0;
+
+                var raceType = cat["raceType"]?.Value<string>()
+                    ?? cat["key"]?.Value<string>()
+                    ?? cat["category"]?.Value<string>()
+                    ?? "?";
+
+                // Fallback for older flat-array shape where stats are direct properties
+                if (catStats == null)
                 {
-                    Category = stat["category"]?.Value<string>() ?? string.Empty,
-                    Starts = stat["starts"]?.Value<int>() ?? 0,
-                    Wins = stat["wins"]?.Value<int>() ?? 0,
-                    Podiums = stat["podiums"]?.Value<int>() ?? 0,
-                    Finishes = stat["finishes"]?.Value<int>() ?? 0,
-                });
+                    var u = cat["retirements"]?.Value<int>() ?? 0;
+                    var st = cat["starts"]?.Value<int>() ?? 0;
+                    profile.Stats.Add(new DriverCategoryStats
+                    {
+                        Category = raceType,
+                        Starts = st,
+                        Wins = cat["wins"]?.Value<int>() ?? 0,
+                        KlasseWinst = cat["class_wins"]?.Value<int>() ?? 0,
+                        Uitval = u,
+                        UitvalPct = st > 0 ? Math.Round(100.0 * u / st, 1) : 0,
+                    });
+                }
+                else
+                {
+                    profile.Stats.Add(new DriverCategoryStats
+                    {
+                        Category = raceType.Length > 0
+                            ? char.ToUpper(raceType[0]) + raceType[1..]
+                            : raceType,
+                        Starts = GetStat("lg_starts"),
+                        Wins = GetStat("lg_winsU"),
+                        KlasseWinst = GetStat("lg_class_wins"),
+                        Uitval = GetStat("lg_countretirement"),
+                        UitvalPct = GetPct("lg_countretirement"),
+                    });
+                }
             }
 
             return profile;
@@ -288,6 +380,44 @@ public class EwrcApiService
         {
             return null;
         }
+    }
+
+    // Extracts the list of search hits from a /search response that may be:
+    //   - a top-level array:            [ {..}, {..} ]
+    //   - an object with a list key:    { "results": [..] }
+    //   - groups of arrays:             { "drivers": [..], "events": [..] }
+    //   - groups of {total,items}:      { "drivers": {"total":9,"items":[..]}, "codrivers": {..} }   (current eWRC shape)
+    // For the grouped cases the group key is injected as "__group" so each hit keeps its type.
+    private static JArray ExtractSearchArray(string json)
+    {
+        var token = JToken.Parse(json);
+        if (token is JArray arr) return arr;
+        if (token is not JObject obj) return new JArray();
+
+        // Single wrapper array under a common key
+        foreach (var key in new[] { "results", "data", "items", "hits" })
+            if (obj[key] is JArray wrapped) return wrapped;
+
+        // Gather hits from each top-level group, whether it is an array or a {total, items} object
+        var combined = new JArray();
+        foreach (var prop in obj.Properties())
+        {
+            var groupArr = prop.Value switch
+            {
+                JArray a => a,
+                JObject go when go["items"] is JArray ia => ia,
+                _ => null
+            };
+            if (groupArr == null) continue;
+
+            foreach (var item in groupArr)
+            {
+                if (item is JObject itemObj && itemObj["type"] == null)
+                    itemObj["__group"] = prop.Name;
+                combined.Add(item);
+            }
+        }
+        return combined;
     }
 
     // Parses a JSON response that may be either an array [...] or an object {...}
