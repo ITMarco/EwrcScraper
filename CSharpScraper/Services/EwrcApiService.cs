@@ -372,6 +372,57 @@ public class EwrcApiService
         }
     }
 
+    // Fetch for the Occasions feature. Needs two endpoints:
+    //   - profile:    name, mileage, seasons, born, titles, number_of_starts (incl. pending entries)
+    //   - categories: lg_starts — the results-based COMPLETED start count (excludes registrations)
+    // number_of_starts counts a rally the moment someone is entered, so milestones must use
+    // the completed count instead. Returns null on 404 so one bad ID won't abort a bulk refresh.
+    public async Task<MemberStats?> GetMemberStatsAsync(string ewrcId, string rol)
+    {
+        var endpoint = rol.Equals("codriver", StringComparison.OrdinalIgnoreCase) ? "codriver" : "driver";
+        var obj = await TryGetJObjectAsync($"{_apiBase}/{endpoint}/{ewrcId}");
+        if (obj == null)
+        {
+            _debug.Log($"  Geen statistieken voor {endpoint}/{ewrcId} (404 of leeg).");
+            return null;
+        }
+
+        var firstName = obj["firstname"]?.Value<string>() ?? string.Empty;
+        var lastName = obj["lastname"]?.Value<string>() ?? string.Empty;
+        var naam = $"{firstName} {lastName}".Trim();
+        var titels = (obj["overall_titles"] as JArray)?.Count ?? 0;
+        int ingeschreven = obj["number_of_starts"]?.Value<int>() ?? 0;
+
+        // Results-based completed starts from the categories endpoint.
+        var catToken = await TryGetJTokenAsync($"{_apiBase}/{endpoint}/{ewrcId}/categories?all=true");
+        int voltooid;
+        if (catToken is JObject catObj && catObj["categories"] is JArray cats)
+        {
+            voltooid = cats.Sum(c => (c["stats"] as JArray)?
+                .FirstOrDefault(st => st["key"]?.Value<string>() == "lg_starts")?
+                ["value"]?.Value<int>() ?? 0);
+        }
+        else
+        {
+            // Categories call failed — fall back to number_of_starts (may include pending entries).
+            voltooid = ingeschreven;
+        }
+
+        return new MemberStats
+        {
+            EwrcId = ewrcId,
+            Rol = endpoint,
+            Naam = naam,
+            Starts = voltooid,
+            Ingeschreven = ingeschreven,
+            KilometersTotaal = obj["mileage"]?.Value<int>() ?? 0,
+            EersteSeizoen = obj["first_season"]?.Value<int>() ?? 0,
+            LaatsteSeizoen = obj["last_season"]?.Value<int>() ?? 0,
+            Geboren = obj["born"]?.Value<string>() ?? string.Empty,
+            AantalTitels = titels,
+        };
+    }
+
     // GETs a URL and parses the body as a JObject; returns null on 404 / parse failure.
     private async Task<JObject?> TryGetJObjectAsync(string url)
     {

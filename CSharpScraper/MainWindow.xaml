@@ -595,6 +595,97 @@
                     </Grid>
                 </Grid>
             </TabItem>
+
+            <TabItem Style="{StaticResource TabHeaderStyle}" Header="🎉 Gelegenheden">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Toolbar -->
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                        <Label Content="Gelegenheden om te vieren" Style="{StaticResource HeaderLabel}"
+                               DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                            <CheckBox Content="Alleen te vieren" VerticalAlignment="Center" Margin="0,0,12,0"
+                                      IsChecked="{Binding Gelegenheden.AlleenTeVieren}"/>
+                            <Button Content="⚙ Mijlpalen bewerken" Padding="10,5" Margin="0,0,6,0"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Click="BtnMijlpalen_Click"/>
+                            <Button Content="🔗 Kruis met rally (Stap 1)" Padding="10,5" Margin="0,0,6,0"
+                                    Style="{StaticResource SecondaryButton}"
+                                    ToolTip="Koppel de in Stap 1 aangevinkte rally('s) aan de leden: welke aankomende start is een mijlpaal?"
+                                    Command="{Binding Gelegenheden.KruisMetRallyCommand}"/>
+                            <Button Content="🔄 Ververs statistieken" Padding="10,5" Margin="0,0,6,0"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding Gelegenheden.VerversStaleCommand}"/>
+                            <Button Content="♻ Alles verversen" Padding="10,5"
+                                    Style="{StaticResource SecondaryButton}"
+                                    ToolTip="Negeer de cache en haal alle leden opnieuw op"
+                                    Command="{Binding Gelegenheden.VerversAllesCommand}"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <!-- Status + laatst bijgewerkt -->
+                    <DockPanel Grid.Row="1" Margin="0,0,0,4">
+                        <TextBlock Text="{Binding Gelegenheden.LaatstBijgewerkt}" DockPanel.Dock="Right"
+                                   FontSize="11" Foreground="#889" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Gelegenheden.StatusTekst}" Style="{StaticResource StatusLabel}"/>
+                    </DockPanel>
+
+                    <!-- Voortgang tijdens ophalen -->
+                    <ProgressBar Grid.Row="2" Height="6" Minimum="0" Maximum="100" Margin="0,0,0,8"
+                                 Value="{Binding Gelegenheden.Voortgang}"
+                                 Foreground="{StaticResource AccentBrush}"
+                                 Visibility="{Binding Gelegenheden.IsBezig, Converter={StaticResource BoolToVis}}"/>
+
+                    <!-- Gelegenhedentabel -->
+                    <DataGrid Grid.Row="3" ItemsSource="{Binding Gelegenheden.Occasions}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="Nieuw">
+                                        <Setter Property="Background" Value="#FFF6D8"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Aankomend">
+                                        <Setter Property="Background" Value="#EAF3FF"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding MinderActief}" Value="True">
+                                        <Setter Property="Foreground" Value="#999"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Naam"        Binding="{Binding Naam}"        Width="170"/>
+                            <DataGridTextColumn Header="Rol"         Binding="{Binding Rol}"         Width="75"/>
+                            <DataGridTextColumn Header="Soort"       Binding="{Binding SoortNl}"     Width="110"/>
+                            <DataGridTextColumn Header="Status"      Binding="{Binding StatusNl}"    Width="100"/>
+                            <DataGridTextColumn Header="Gelegenheid" Binding="{Binding Omschrijving}" Width="*"/>
+                            <DataGridTextColumn Header="Laatste rally" Binding="{Binding LaatsteRally}" Width="90"/>
+                            <DataGridTextColumn Header="Activiteit"  Binding="{Binding ActiviteitNl}" Width="100"/>
+                            <DataGridTemplateColumn Header="" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Profiel ↗" Padding="6,2" Margin="2" FontSize="11"
+                                                Command="{Binding DataContext.Gelegenheden.OpenProfielCommand,
+                                                          RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
         </TabControl>
     </DockPanel>
 </Window>

@@ -1,5 +1,5 @@
 {
-  "version": "1.4.1",
-  "releaseDate": "2026-06-26",
-  "releaseNotes": "Rijdersfoto hersteld, robuustere profiellading bij 404, en verbeterde auto-update met diagnostiek."
+  "version": "1.5.0",
+  "releaseDate": "2026-07-07",
+  "releaseNotes": "Gelegenheden-tab toegevoegd: mijlpalen (starts/km/jubileum), verjaardagen, rally-kruisverwijzing, per-rol activiteit en bewerkbare drempels."
 }

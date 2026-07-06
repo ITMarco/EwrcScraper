@@ -81,6 +81,13 @@ public partial class MainWindow : Window
         dialog.ShowDialog();
     }
 
+    private void BtnMijlpalen_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Views.OccasionSettingsWindow(_vm.OccasionService) { Owner = this };
+        if (dialog.ShowDialog() == true)
+            _vm.Gelegenheden.HerlaadInstellingen();
+    }
+
     private void JaarTerug_Click(object sender, RoutedEventArgs e)
         => _vm.RallySelectie.GeselecteerdJaar--;
 

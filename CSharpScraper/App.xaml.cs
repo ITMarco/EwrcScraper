@@ -22,13 +22,16 @@ public partial class App : Application
         var api = new EwrcApiService(http, debug, geladen.ApiBaseUrl);
         var updateSvc = new UpdateService(http);
         var memberSvc = new MemberListService(debug);
+        var statsSvc = new MemberStatsService(api, debug);
+        var occasionSvc = new OccasionService(debug);
 
         var rallyVm = new RallySelectionViewModel(api, debug, prefs);
         var ledenVm = new MemberListViewModel(memberSvc, debug, prefs);
         var vergelijkVm = new ComparisonViewModel(api, debug);
         var rijderVm = new DriverSearchViewModel(api, debug);
+        var occasionVm = new OccasionsViewModel(ledenVm, rallyVm, api, statsSvc, occasionSvc, debug);
         var debugVm = new DebugViewModel(debug, prefs);
-        var mainVm = new MainViewModel(rallyVm, ledenVm, vergelijkVm, rijderVm, debugVm, prefs, updateSvc, debug);
+        var mainVm = new MainViewModel(rallyVm, ledenVm, vergelijkVm, rijderVm, occasionVm, debugVm, prefs, updateSvc, occasionSvc, debug);
 
         var window = new MainWindow(mainVm);
         window.Show();

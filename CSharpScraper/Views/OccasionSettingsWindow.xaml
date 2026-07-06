@@ -1,0 +1,98 @@
+<Window x:Class="EwrcScraper.Views.OccasionSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mijlpalen bewerken"
+        Height="700" Width="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Background="{StaticResource LightBgBrush}">
+    <DockPanel>
+
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource PrimaryBrush}" Padding="20,14">
+            <StackPanel>
+                <TextBlock Text="Mijlpalen bewerken" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="Geef de waarden op, gescheiden door komma's."
+                           FontSize="11" Foreground="#8AAAC8" Margin="0,3,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Footer buttons -->
+        <Border DockPanel.Dock="Bottom" Background="White"
+                BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,1,0,0"
+                Padding="16,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="AnnuleerBtn" Content="Annuleren"
+                        Style="{StaticResource SecondaryButton}"
+                        Padding="12,7" Margin="0,0,8,0" Click="Annuleren_Click"/>
+                <Button x:Name="OpslaanBtn" Content="💾 Opslaan"
+                        Style="{StaticResource PrimaryButton}"
+                        Padding="12,7" Click="Opslaan_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Fields -->
+        <StackPanel Margin="20,16">
+            <TextBlock Text="Rally-mijlpalen (aantal starts)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <TextBox x:Name="StartMijlpalenBox" Padding="6,4"
+                     BorderBrush="{StaticResource AppBorderBrush}"/>
+            <TextBlock Text="Bijv. 10, 25, 50, 75, 100" FontSize="10" Foreground="#889" Margin="0,3,0,14"/>
+
+            <TextBlock Text="Kilometer-mijlpalen (totaal km)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <TextBox x:Name="KmMijlpalenBox" Padding="6,4"
+                     BorderBrush="{StaticResource AppBorderBrush}"/>
+            <TextBlock Text="Bijv. 5000, 10000, 25000, 50000" FontSize="10" Foreground="#889" Margin="0,3,0,14"/>
+
+            <TextBlock Text="Jubileumjaren (jaren sinds debuut)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <TextBox x:Name="JubileumBox" Padding="6,4"
+                     BorderBrush="{StaticResource AppBorderBrush}"/>
+            <TextBlock Text="Bijv. 5, 10, 15, 20, 25" FontSize="10" Foreground="#889" Margin="0,3,0,14"/>
+
+            <TextBlock Text="Leeftijd-mijlpalen (verjaardag)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <TextBox x:Name="LeeftijdBox" Padding="6,4"
+                     BorderBrush="{StaticResource AppBorderBrush}"/>
+            <TextBlock Text="Bijv. 40, 50, 60, 65, 70" FontSize="10" Foreground="#889" Margin="0,3,0,14"/>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Rally-vooraankondiging" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <TextBox x:Name="StartVoorBox" Padding="6,4"
+                             BorderBrush="{StaticResource AppBorderBrush}"/>
+                    <TextBlock Text="Aantal starts van tevoren melden" FontSize="10" Foreground="#889" Margin="0,3,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Km-vooraankondiging" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <TextBox x:Name="KmVoorBox" Padding="6,4"
+                             BorderBrush="{StaticResource AppBorderBrush}"/>
+                    <TextBlock Text="Aantal km van tevoren melden" FontSize="10" Foreground="#889" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Verjaardag-vooraankondiging" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <TextBox x:Name="VerjaardagVoorBox" Padding="6,4"
+                             BorderBrush="{StaticResource AppBorderBrush}"/>
+                    <TextBlock Text="Aantal dagen van tevoren melden" FontSize="10" Foreground="#889" Margin="0,3,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Minder actief na (jaren)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                    <TextBox x:Name="InactiefBox" Padding="6,4"
+                             BorderBrush="{StaticResource AppBorderBrush}"/>
+                    <TextBlock Text="Laatste rally langer dan X jaar geleden" FontSize="10" Foreground="#889" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </DockPanel>
+</Window>

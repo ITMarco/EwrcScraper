@@ -12,10 +12,12 @@ public partial class MainViewModel : ObservableObject
     public MemberListViewModel Ledenlijst { get; }
     public ComparisonViewModel Vergelijking { get; }
     public DriverSearchViewModel RijderZoeken { get; }
+    public OccasionsViewModel Gelegenheden { get; }
     public DebugViewModel Debug { get; }
 
     public PreferencesService VoorkeurenService { get; }
     public UpdateService UpdateService { get; }
+    public OccasionService OccasionService { get; }
 
     public UpdateInfo? BeschikbareUpdate { get; private set; }
 
@@ -37,9 +39,11 @@ public partial class MainViewModel : ObservableObject
         MemberListViewModel ledenlijst,
         ComparisonViewModel vergelijking,
         DriverSearchViewModel rijderZoeken,
+        OccasionsViewModel gelegenheden,
         DebugViewModel debugVm,
         PreferencesService prefsService,
         UpdateService updateService,
+        OccasionService occasionService,
         DebugService debug)
     {
         _debug = debug;
@@ -47,10 +51,12 @@ public partial class MainViewModel : ObservableObject
         Ledenlijst = ledenlijst;
         Vergelijking = vergelijking;
         RijderZoeken = rijderZoeken;
+        Gelegenheden = gelegenheden;
         Debug = debugVm;
         _prefsService = prefsService;
         VoorkeurenService = prefsService;
         UpdateService = updateService;
+        OccasionService = occasionService;
         _voorkeuren = prefsService.Load();
 
         debug.LogAdded += msg => StatusBalk = msg;
@@ -66,6 +72,9 @@ public partial class MainViewModel : ObservableObject
 
         if (!string.IsNullOrEmpty(prefs.LedenlijstPad))
             Ledenlijst.LaadVanPad(prefs.LedenlijstPad);
+
+        // Show any cached celebrations immediately; no network call on startup.
+        Gelegenheden.LaadUitCache();
 
         // Auto-load rally list on subsequent runs; skip on very first run (no prefs file yet)
         if (prefsBestaatAl && prefs.GeselecteerdeCountryIds.Count > 0)
