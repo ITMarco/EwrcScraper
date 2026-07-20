@@ -29,3 +29,9 @@ Installer/Output/
 # OS
 Thumbs.db
 desktop.ini
+
+# Claude Code local settings
+.claude/
+
+# Built binary (distributed via releases, not git)
+EwrcScraper.exe
