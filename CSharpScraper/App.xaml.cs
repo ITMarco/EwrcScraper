@@ -1,5 +1,6 @@
 using EwrcScraper.Services;
 using EwrcScraper.ViewModels;
+using System.Net;
 using System.Net.Http;
 using System.Windows;
 
@@ -15,12 +16,32 @@ public partial class App : Application
         var prefs = new PreferencesService();
         var geladen = prefs.Load();
 
-        var http = new HttpClient();
-        http.DefaultRequestHeaders.Add("User-Agent", "EwrcScraper/1.0 (RCH)");
-        http.Timeout = TimeSpan.FromSeconds(30);
+        // eWRC sits behind Cloudflare, which blocks the .NET TLS fingerprint with 403
+        // regardless of headers (verified: native curl.exe -> 200, .NET -> 403, same IP).
+        // Route eWRC calls through curl.exe, whose TLS stack Cloudflare accepts; fall back
+        // to the normal .NET stack only if curl.exe is somehow unavailable.
+        HttpMessageHandler apiHandler = CurlHttpHandler.IsAvailable()
+            ? new CurlHttpHandler(maxSeconds: 45)
+            : new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All };
+        if (!(apiHandler is CurlHttpHandler))
+            debug.Log("[Netwerk] curl.exe niet gevonden — val terug op .NET (mogelijk 403 van Cloudflare).");
 
-        var api = new EwrcApiService(http, debug, geladen.ApiBaseUrl);
-        var updateSvc = new UpdateService(http);
+        var apiHttp = new HttpClient(apiHandler);
+        apiHttp.DefaultRequestHeaders.UserAgent.ParseAdd(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36");
+        apiHttp.DefaultRequestHeaders.Accept.ParseAdd("application/json, text/plain, */*");
+        apiHttp.DefaultRequestHeaders.AcceptLanguage.ParseAdd("nl-NL,nl;q=0.9,en;q=0.8");
+        apiHttp.DefaultRequestHeaders.Referrer = new Uri("https://ewrc-results.com/");
+        apiHttp.DefaultRequestHeaders.Add("Origin", "https://ewrc-results.com");
+        apiHttp.Timeout = TimeSpan.FromSeconds(60);
+
+        // The GitHub update check is a separate service with a plain identifying client.
+        var updateHttp = new HttpClient();
+        updateHttp.DefaultRequestHeaders.Add("User-Agent", "EwrcScraper/1.0 (RCH)");
+        updateHttp.Timeout = TimeSpan.FromSeconds(30);
+
+        var api = new EwrcApiService(apiHttp, debug, geladen.ApiBaseUrl);
+        var updateSvc = new UpdateService(updateHttp);
         var memberSvc = new MemberListService(debug);
         var statsSvc = new MemberStatsService(api, debug);
         var occasionSvc = new OccasionService(debug);
