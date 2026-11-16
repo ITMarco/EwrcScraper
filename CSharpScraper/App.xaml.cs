@@ -1,5 +1,6 @@
 using EwrcScraper.Services;
 using EwrcScraper.ViewModels;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Windows;
@@ -11,6 +12,22 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Catch otherwise-fatal errors: log them and show the cause instead of a silent crash.
+        DispatcherUnhandledException += (_, args) =>
+        {
+            LogCrash("UI-thread", args.Exception);
+            MessageBox.Show(KorteFout(args.Exception), "EWRC Scraper — fout",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            args.Handled = true;   // keep the app alive
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            LogCrash("AppDomain", args.ExceptionObject as Exception);
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            LogCrash("Task", args.Exception);
+            args.SetObserved();
+        };
 
         var debug = new DebugService();
         var prefs = new PreferencesService();
@@ -57,4 +74,21 @@ public partial class App : Application
         var window = new MainWindow(mainVm);
         window.Show();
     }
+
+    private static void LogCrash(string bron, Exception? ex)
+    {
+        try
+        {
+            var dir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EwrcScraper");
+            Directory.CreateDirectory(dir);
+            File.AppendAllText(Path.Combine(dir, "crash.log"),
+                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {bron}\n{ex}\n\n");
+        }
+        catch { /* logging must never throw */ }
+    }
+
+    private static string KorteFout(Exception ex) =>
+        $"Er ging iets mis:\n\n{ex.GetType().Name}: {ex.Message}\n\n" +
+        $"Details staan in:\n%AppData%\\EwrcScraper\\crash.log";
 }

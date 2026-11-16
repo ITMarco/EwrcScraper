@@ -1,8 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EwrcScraper.Services;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace EwrcScraper.ViewModels;
 
@@ -10,6 +12,15 @@ public partial class DebugViewModel : ObservableObject
 {
     private readonly DebugService _debug;
     private readonly PreferencesService _prefs;
+
+    // Incoming log lines can arrive from any thread (HTTP continuations run off the UI
+    // thread) and in bursts. They are queued here and flushed into the bound collection
+    // in batches on the UI thread by a low-priority timer, so the ListBox is never
+    // mutated mid-layout — the cause of the "ItemsControl is inconsistent with its
+    // items source" crash.
+    private readonly ConcurrentQueue<string> _binnenkomend = new();
+    private readonly DispatcherTimer _flushTimer;
+    private const int MaxRegels = 2000;
 
     public ObservableCollection<string> LogRegels { get; } = new();
 
@@ -21,16 +32,38 @@ public partial class DebugViewModel : ObservableObject
 
         foreach (var regel in _debug.GetAll())
             LogRegels.Add(regel);
+
+        _flushTimer = new DispatcherTimer(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(200)
+        };
+        _flushTimer.Tick += (_, _) => Flush();
+        _flushTimer.Start();
     }
 
-    private void OnLogAdded(string regel)
+    private void OnLogAdded(string regel) => _binnenkomend.Enqueue(regel);
+
+    // Runs on the UI thread (DispatcherTimer) at Background priority: it never fires
+    // during a layout/measure pass, so adding here is safe.
+    private void Flush()
     {
-        Application.Current.Dispatcher.Invoke(() => LogRegels.Add(regel));
+        bool gewijzigd = false;
+        while (_binnenkomend.TryDequeue(out var regel))
+        {
+            LogRegels.Add(regel);
+            gewijzigd = true;
+        }
+        if (!gewijzigd) return;
+
+        // Keep the list bounded so a long session stays responsive.
+        while (LogRegels.Count > MaxRegels)
+            LogRegels.RemoveAt(0);
     }
 
     [RelayCommand]
     private void Wissen()
     {
+        while (_binnenkomend.TryDequeue(out _)) { }
         _debug.Clear();
         LogRegels.Clear();
     }

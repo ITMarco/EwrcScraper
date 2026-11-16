@@ -19,7 +19,15 @@
                  BorderBrush="#30363D" BorderThickness="1"
                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                 VirtualizingPanel.IsVirtualizing="True">
+                 VirtualizingPanel.IsVirtualizing="False">
+            <!-- Plain StackPanel (no virtualization): the virtualizing panel's generator
+                 could desync under rapid log updates and throw. The list is capped in the
+                 view-model, so eager containers stay affordable. -->
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
                     <Setter Property="Padding" Value="4,1"/>

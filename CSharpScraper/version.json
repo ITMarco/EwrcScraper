@@ -1,5 +1,5 @@
 {
-  "version": "1.5.1",
-  "releaseDate": "2026-10-22",
-  "releaseNotes": "Fix: eWRC blokkeerde de .NET TLS-fingerprint (403). API-verkeer gaat nu via de native Windows curl.exe-stack die Cloudflare accepteert."
+  "version": "1.5.2",
+  "releaseDate": "2026-11-16",
+  "releaseNotes": "Crash bij 'Rally info ophalen' met het debugvenster open opgelost; het debuglog wordt nu veilig en gebufferd bijgewerkt."
 }
